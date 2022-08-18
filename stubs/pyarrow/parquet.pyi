@@ -1,0 +1,13 @@
+from __future__ import annotations
+
+import os
+
+from pyarrow import Schema, Table
+
+# The subs below are obviously incomplete. They cover only the bare necessities.
+
+class ParquetWriter:
+    def __init__(self, path: str | os.PathLike[str], schema: Schema) -> None: ...
+    def __enter__(self) -> ParquetWriter: ...
+    def __exit__(self, *args: object, **kwargs: object) -> bool: ...
+    def write_table(self, table: Table) -> None: ...

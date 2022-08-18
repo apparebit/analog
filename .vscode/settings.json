@@ -1,0 +1,16 @@
+{
+  "cSpell.words": [
+    "aspath",
+    "dtype",
+    "dtypes",
+    "iloc",
+    "konsole",
+    "mmdb",
+    "NUMEXPR",
+    "pyarrow",
+    "qname",
+    "unescapes"
+  ],
+  "python.formatting.provider": "black",
+  "notebook.output.textLineLimit": 1000
+}
