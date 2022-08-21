@@ -58,7 +58,7 @@ def to_options(args: list[str]) -> argparse.Namespace:
     else:
         options.root = Path(__file__).parents[1] / "data"
 
-    konsole.config(use_color=options.use_color, volume=options.volume)
+    konsole.config(use_color=options.use_color, volume=options.volume + 1)
     konsole.info("Running with configuration", detail=vars(options))
 
     return options
@@ -76,20 +76,23 @@ def main(args: None | list[str] = None) -> None:
         # Delay import of data manager module until after numexpr has been configured.
         from .data_manager import latest_log_data
 
-        frame, _ = latest_log_data(options)
+        frame, cover = latest_log_data(options)
 
-        from .analyzer import calculate
+        from .analyzer import analyze
 
         series = (
-            calculate(frame)
-            .humans()
-            .successfully()
-            .getting()
-            .markup()
-            .per_month()
+            analyze(frame, cover)
+            .only.humans()
+            .only.get()
+            .only.markup()
+            .only.successful()
+            .in_requests.per_month()
             .series
         )
-        print(series.to_string())
+
+        s = series.to_string()
+        s = s.replace("-01 00:00:00+00:00", "")
+        konsole.info("Monthly page views", detail=s.splitlines()[1:-1])
 
     except KeyboardInterrupt:
         konsole.warning("Analog detected keyboard interrupt, exiting...")
