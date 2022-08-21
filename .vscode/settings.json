@@ -1,14 +1,17 @@
 {
   "cSpell.words": [
     "aspath",
+    "d'être",
     "dtype",
     "dtypes",
+    "Frameful",
     "iloc",
     "konsole",
     "mmdb",
     "NUMEXPR",
     "pyarrow",
     "qname",
+    "Seriesful",
     "unescapes"
   ],
   "python.formatting.provider": "black",
