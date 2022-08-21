@@ -14,6 +14,7 @@ import pandas as pd
 import pyarrow
 import pyarrow.parquet
 
+from .atomic_update import atomic_update
 from .label import ContentType, HttpMethod, HttpProtocolVersion, HttpScheme, HttpStatus
 from .month_in_year import MonthInYear
 from .parser import enrich, parse_all_lines
@@ -137,31 +138,33 @@ class Coverage:
     def ingested_logs(self) -> Iterator[tuple[MonthInYear, Path]]:
         return iter(self._ingested_logs)
 
-    def register_log_data(self, month: MonthInYear, data: pd.DataFrame) -> None:
-        strmonth = str(month)
+    def register_log_data(self, month_in_year: MonthInYear, data: pd.DataFrame) -> None:
+        key = str(month_in_year)
 
-        assert self._start <= month <= self._stop
-        assert strmonth not in self._monthly_requests
+        assert self._start <= month_in_year <= self._stop
+        assert key not in self._monthly_requests
 
-        self._days += len(month)
+        self._days += month_in_year.days()
         self._months += 1
 
         requests = len(data)
-        self._monthly_requests[strmonth] = {"requests": requests}
+        self._monthly_requests[key] = {"requests": requests}
         self._total_requests += requests
 
     def summary(self) -> dict[str, object]:
         cursor = self._start
-        days = len(cursor)
+        days = cursor.days()
         months = 1
         missing: list[str] = []
+
         while cursor < self._stop:
             cursor = cursor.next()
-            if str(cursor) in self._monthly_requests:
-                days += len(cursor)
+            key = str(cursor)
+            if key in self._monthly_requests:
+                days += cursor.days()
                 months += 1
             else:
-                missing.append(str(cursor))
+                missing.append(key)
 
         assert days == self._days
         assert months == self._months
@@ -179,7 +182,7 @@ class Coverage:
 
     def save(self) -> None:
         coverage = self._monthly_requests | {"summary": self.summary()}
-        with open(self.path_with_suffix(".json"), mode="w", encoding="utf8") as file:
+        with atomic_update(self.path_with_suffix(".json")) as file:
             json.dump(coverage, file, indent=4, sort_keys=True)
 
 
@@ -246,12 +249,12 @@ class DataManager:
 
     def _parse_access_log_name(self, path: Path) -> MonthInYear:
         """Parse name of log file into domain and month of year."""
-        month = MonthInYear.from_mmm_yyyy(path.stem[-8:])
+        month_in_year = MonthInYear.from_mmm_yyyy(path.stem[-8:])
         domain = path.stem[:-17]
         if self._domain is None:
             self._domain = domain
         if self._domain == domain:
-            return month
+            return month_in_year
 
         raise ValueError(
             f"'{self._access_log_path}' contains access logs for "
@@ -285,14 +288,16 @@ class DataManager:
             if not source_path.is_file():
                 continue
 
-            month = self._parse_access_log_name(source_path)
-            target_path = self._enriched_log_path / f"{self._domain}-{month}.parquet"
+            month_in_year = self._parse_access_log_name(source_path)
+            target_path = (
+                self._enriched_log_path / f"{self._domain}-{month_in_year}.parquet"
+            )
             if target_path.exists():
                 continue
 
             konsole.info(
                 "Ingest request data for %s",
-                month,
+                month_in_year,
                 detail={"from": source_path, "to": target_path},
             )
 
@@ -312,9 +317,9 @@ class DataManager:
         # writing a single data frame. Hence we avoid this approach by
         # default.
 
-        def read_table(month: MonthInYear, path: Path) -> pyarrow.Table:
+        def read_table(month_in_year: MonthInYear, path: Path) -> pyarrow.Table:
             frame = pd.read_parquet(path)
-            coverage.register_log_data(month, frame)
+            coverage.register_log_data(month_in_year, frame)
             return pyarrow.Table.from_pandas(frame)
 
         it = coverage.ingested_logs()
@@ -322,17 +327,17 @@ class DataManager:
         with pyarrow.parquet.ParquetWriter(target_path, table.schema) as parquet:
             parquet.write_table(table)
 
-            for month, source_path in it:
-                parquet.write_table(read_table(month, source_path))
+            for month_in_year, source_path in it:
+                parquet.write_table(read_table(month_in_year, source_path))
 
         coverage.save()
         self._log_data = pd.read_parquet(target_path)
 
     def _combine_and_write(self, coverage: Coverage, target_path: Path) -> None:
         frames = []
-        for month, source_path in coverage.ingested_logs():
+        for month_in_year, source_path in coverage.ingested_logs():
             frame = pd.read_parquet(source_path)
-            coverage.register_log_data(month, frame)
+            coverage.register_log_data(month_in_year, frame)
             frames.append(frame)
 
         self._log_data = pd.concat(frames, ignore_index=True)
