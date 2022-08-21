@@ -16,6 +16,7 @@ from geoip2.models import City as LocationData
 
 from ua_parser.user_agent_parser import Parse as parse_user_agent
 
+from .atomic_update import atomic_update
 from .label import ContentType, HttpMethod, HttpProtocolVersion, HttpScheme, HttpStatus
 
 
@@ -262,7 +263,7 @@ def enrich_client_name(log_data: LogData, hostname_db: Path) -> None:
 
         names.append(hostnames[address])
 
-    with open(hostname_db, mode="w", encoding="utf8") as file:
+    with atomic_update(hostname_db) as file:
         json.dump(hostnames, file, indent=0, sort_keys=True)
 
 
