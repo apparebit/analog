@@ -1,9 +1,7 @@
 from __future__ import annotations
 from calendar import monthrange
-from collections.abc import Iterator
-from dataclasses import dataclass
 import re
-from typing import TYPE_CHECKING
+from typing import NamedTuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -27,8 +25,7 @@ _SHORT_MONTHS = (
 _YYYY_MM = re.compile(r"\d\d\d\d[-./_]\d\d")
 
 
-@dataclass(frozen=True, kw_only=True, order=True)
-class MonthInYear:
+class MonthInYear(NamedTuple):
     """A specific month in a specific year."""
 
     year: int
@@ -69,7 +66,7 @@ class MonthInYear:
         """Create month in year from Pandas timestamp."""
         return cls(year=timestamp.year, month=timestamp.month)
 
-    def __len__(self) -> int:
+    def days(self) -> int:
         """Get number of days for this month in year."""
         _, days = monthrange(self.year, self.month)
         return days
@@ -80,11 +77,13 @@ class MonthInYear:
     def __sub__(self, other: MonthInYear) -> int:
         return (self.year - other.year) * 12 + (self.month - other.month)
 
-    def __iter__(self) -> Iterator[MonthInYear]:
-        cursor = self
-        while True:
-            yield cursor
-            cursor = cursor.next()
+    def previous(self) -> MonthInYear:
+        year = self.year
+        month = self.month - 1
+        if month == 0:
+            year -= 1
+            month = 12
+        return self.__class__(year=year, month=month)
 
     def next(self) -> MonthInYear:
         year = self.year
