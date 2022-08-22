@@ -86,7 +86,7 @@ def main(args: None | list[str] = None) -> None:
             .only.get()
             .only.markup()
             .only.successful()
-            .in_requests.per_month()
+            .as_requests.per_month()
             .series
         )
 

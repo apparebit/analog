@@ -181,7 +181,7 @@ class FluentPhrase(FluentFrameDisplay):
         return self.handoff(FluentDuration)
 
     @property
-    def in_requests(self) -> FluentRequestRate:
+    def as_requests(self) -> FluentRequestRate:
         """Convert to requests per month or day."""
         return self.handoff(FluentRequestRate)
 
