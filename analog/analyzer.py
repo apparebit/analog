@@ -8,13 +8,13 @@ from .label import ContentType, HttpMethod, HttpProtocol, HttpStatus
 
 
 DT = TypeVar("DT", pd.Series, pd.DataFrame)
-FrameWrapper = TypeVar("FrameWrapper", bound="Storage[pd.DataFrame]")
+FrameWrapper = TypeVar("FrameWrapper", bound="FluentTerm[pd.DataFrame]")
 
 FrameMapper: TypeAlias = Callable[[pd.DataFrame], pd.DataFrame]
 SeriesMapper: TypeAlias = Callable[[pd.DataFrame], pd.Series]
 
 
-class Storage(Generic[DT]):
+class FluentTerm(Generic[DT]):
     def __init__(self, data: DT, cover: Coverage) -> None:
         self._data: DT = data
         self._cover: Coverage = cover
@@ -28,24 +28,24 @@ class Storage(Generic[DT]):
         return self._cover
 
     def handoff(
-        self: Storage[pd.DataFrame], wrapper: type[FrameWrapper]
+        self: FluentTerm[pd.DataFrame], wrapper: type[FrameWrapper]
     ) -> FrameWrapper:
         return wrapper(self._data, self._cover)
 
     def map(
-        self: Storage[pd.DataFrame], wrapper: type[FrameWrapper], mapper: FrameMapper
+        self: FluentTerm[pd.DataFrame], wrapper: type[FrameWrapper], mapper: FrameMapper
     ) -> FrameWrapper:
         return wrapper(mapper(self._data), self._cover)
 
     def filter(
-        self: Storage[pd.DataFrame],
+        self: FluentTerm[pd.DataFrame],
         wrapper: type[FrameWrapper],
         predicate: SeriesMapper,
     ) -> FrameWrapper:
         return wrapper(self._data[predicate(self._data)], self._cover)
 
 
-class FluentSentence(Storage[pd.DataFrame]):
+class FluentSentence(FluentTerm[pd.DataFrame]):
     @property
     def only(self) -> FluentFilter:
         """Filter out requests that do not meet the criterion."""
@@ -66,7 +66,7 @@ class FluentSentence(Storage[pd.DataFrame]):
         return self.handoff(FluentDisplay)
 
 
-class FluentFilter(Storage[pd.DataFrame]):
+class FluentFilter(FluentTerm[pd.DataFrame]):
     def bots(self) -> FluentSentence:
         return self.filter(FluentSentence, lambda df: df["is_bot"])
 
@@ -126,7 +126,7 @@ class FluentFilter(Storage[pd.DataFrame]):
         return self.filter(FluentSentence, lambda df: df[column] == criterion)
 
 
-class FluentRate(Storage[pd.DataFrame]):
+class FluentRate(FluentTerm[pd.DataFrame]):
     def requests(self) -> FluentDisplay[pd.Series]:
         ts = self._data["timestamp"]
         return FluentDisplay(
@@ -152,7 +152,7 @@ class FluentRate(Storage[pd.DataFrame]):
         )
 
 
-class FluentRange(Storage[pd.DataFrame]):
+class FluentRange(FluentTerm[pd.DataFrame]):
     def lifetime(self) -> FluentStatistic:
         return self.handoff(FluentStatistic)
 
@@ -174,7 +174,7 @@ class FluentRange(Storage[pd.DataFrame]):
         )
 
 
-class FluentStatistic(Storage[pd.DataFrame]):
+class FluentStatistic(FluentTerm[pd.DataFrame]):
     def requests(self) -> int:
         return len(self._data)
 
@@ -188,7 +188,7 @@ class FluentStatistic(Storage[pd.DataFrame]):
         return FluentDisplay(self._data[column].value_counts(), self._cover)
 
 
-class FluentDisplay(Storage[DT]):
+class FluentDisplay(FluentTerm[DT]):
     def then_print(self, rows: Optional[int] = None) -> FluentDisplay[DT]:
         if rows is None:
             print(self._data.to_string())
@@ -212,7 +212,7 @@ def analyze(frame: pd.DataFrame, cover: Coverage) -> FluentSentence:
     return FluentSentence(frame, cover)
 
 
-def merge(columns: dict[str, Storage[pd.Series]]) -> FluentSentence:
+def merge(columns: dict[str, FluentTerm[pd.Series]]) -> FluentSentence:
     """
     Merge the named series as columns in a new, wrapped dataframe. All series
     must have the same coverage, i.e., be derrived from the same original
