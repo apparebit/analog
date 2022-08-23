@@ -17,7 +17,7 @@ from geoip2.models import City as LocationData
 from ua_parser.user_agent_parser import Parse as parse_user_agent
 
 from .atomic_update import atomic_update
-from .label import ContentType, HttpMethod, HttpProtocolVersion, HttpScheme, HttpStatus
+from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
 
 
 # ======================================================================================
@@ -199,7 +199,7 @@ def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
 
     props = match.groupdict()
     props["method"] = HttpMethod[props["method"].upper()]
-    props["protocol"] = HttpProtocolVersion(props["protocol"])
+    props["protocol"] = HttpProtocol(props["protocol"])
     props["size"] = parse_size(props["size"])
     props["timestamp"] = parse_timestamp(props["timestamp"])
     props["user_agent"] = unquote(props["user_agent"])

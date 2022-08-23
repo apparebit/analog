@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from analog.label import (
     ContentType,
     HttpMethod,
-    HttpProtocolVersion,
+    HttpProtocol,
     HttpScheme,
     HttpStatus,
 )
@@ -32,7 +32,7 @@ DATA = [
         "method": HttpMethod.GET,
         "path": "/",
         "query": None,
-        "protocol": HttpProtocolVersion.HTTP_20,
+        "protocol": HttpProtocol.HTTP_20,
         "status": 204,
         "size": 0,
         "referrer": None,
@@ -52,7 +52,7 @@ DATA = [
         "method": HttpMethod.POST,
         "path": "/blog/2022/post.html",
         "query": None,
-        "protocol": HttpProtocolVersion.HTTP_11,
+        "protocol": HttpProtocol.HTTP_11,
         "status": 403,
         "size": 665,
         "referrer": "https://example.com/some/path",
