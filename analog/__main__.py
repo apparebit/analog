@@ -5,46 +5,53 @@ import sys
 
 import konsole
 
+from .error import StorageError
+
 
 NUMEXPR_MAX_THREADS = "NUMEXPR_MAX_THREADS"
 
 
 def create_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser("Analyze server access logs")
+    parser = argparse.ArgumentParser("python -m analog")
 
+    cwd = os.getcwd()
     parser.add_argument(
-        "--root",
-        help="Configure the root directory containing log data.",
+        "root",
+        nargs="?",
+        default=cwd,
+        help=f"set the root directory with log data (default: {cwd})",
     )
 
     parser.add_argument(
         "--clean",
-        action=argparse.BooleanOptionalAction,
         default=False,
-        help="Remove all files derrived from the access logs (but not hostnames).",
+        action=argparse.BooleanOptionalAction,
+        help="remove combined dataframes and their sidecar files",
     )
 
     parser.add_argument(
-        "--incremental",
-        action=argparse.BooleanOptionalAction,
+        "--incr",
+        dest="incremental",
         default=False,
-        help="Reduce memory consumption by processing access logs piecemeal.",
+        action=argparse.BooleanOptionalAction,
+        help="incrementally build combined dataframe (experimental)",
     )
 
     parser.add_argument(
-        "--use-color",
-        action=argparse.BooleanOptionalAction,
+        "--color",
+        dest="use_color",
         default=None,
-        help="Toggle color output.",
+        action=argparse.BooleanOptionalAction,
+        help="forcibly enable or disable color output",
     )
 
     parser.add_argument(
         "-v",
         "--verbose",
         action="count",
-        default=0,
+        default=-1,
         dest="volume",
-        help="Increase verbosity",
+        help="increase verbosity",
     )
 
     return parser
@@ -53,12 +60,9 @@ def create_parser() -> argparse.ArgumentParser:
 def to_options(args: list[str]) -> argparse.Namespace:
     parser = create_parser()
     options = parser.parse_args(args)
-    if options.root:
-        options.root = Path(options.root)
-    else:
-        options.root = Path(__file__).parents[1] / "data"
+    options.root = Path(options.root)
 
-    konsole.config(use_color=options.use_color, volume=options.volume + 1)
+    konsole.config(use_color=options.use_color, volume=options.volume)
     konsole.info("Running with configuration", detail=vars(options))
 
     return options
@@ -76,7 +80,7 @@ def main(args: None | list[str] = None) -> None:
         # Delay import of data manager module until after numexpr has been configured.
         from .data_manager import latest_log_data
 
-        frame, cover = latest_log_data(options)
+        frame, cover = latest_log_data(**vars(options))
 
         from .analyzer import analyze
 
@@ -86,8 +90,8 @@ def main(args: None | list[str] = None) -> None:
             .only.get()
             .only.markup()
             .only.successful()
-            .as_requests.per_month()
-            .series
+            .monthly.requests()
+            .data
         )
 
         s = series.to_string()
@@ -96,8 +100,12 @@ def main(args: None | list[str] = None) -> None:
 
     except KeyboardInterrupt:
         konsole.warning("Analog detected keyboard interrupt, exiting...")
+    except StorageError as x:
+        konsole.critical(x.args[0])
     except Exception as x:
-        konsole.critical("Oh dear, something has gone wrong: %s", x, exc_info=x)
+        konsole.critical(
+            "Oh dear, something has gone terribly wrong: %s", x, exc_info=x
+        )
     else:
         konsole.info("Happy, happy, joy, joy!")
 
