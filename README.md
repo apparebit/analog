@@ -156,16 +156,16 @@ The following grammar summarizes the fluent interface. At the top-level, a
 **sentence** consists of phrases to specify (1) filters, (2) grouping and
 selection, and (3) display:
 
-    sentence 🠲 filters grouping-and-selection display
+    sentence -> filters grouping-and-selection display
 
 There are zero or more **filters**, each starting with the `.only` property and
 followed by a method invocation:
 
-    filters 🠲 filter filters | 𝜀
+    filters -> filter filters | 𝜀
 
-    filter 🠲 <dot> "only" <dot> filter-criterion()
+    filter -> <dot> "only" <dot> filter-criterion()
 
-    filter-criterion 🠲
+    filter-criterion ->
         | "bots"
         | "humans"
         | "get"
@@ -191,25 +191,26 @@ grouping and selection. Requiring explicit bypass arguably is less elegant than
 just omitting unnecessary clauses. At the same time, explicit bypass keeps the
 implementation notably simpler.
 
-    grouping-and-selection 🠲
+    grouping-and-selection ->
         | rate statistic
         | range statistic
         | <dot> "as_is"
 
 A **rate** is indicated by the `.monthly` property.
 
-    rate 🠲 <dot> "monthly"
+    rate -> <dot> "monthly"
 
 A **range** is indicated by the `.over` property followed by a method specifying
-the date, time range. The `lifetime()` method covers the entire log. The
-`last_day()`, `last_month()`, and `last_year()` methods arrive at their ranges
-by computing the maximum timestamp for the wrapped log and then subtracting [a
-suitable
+the duration of the range. The `lifetime()` method covers the entire log. The
+`last_day()`, `last_month()`, and `last_year()` methods cover the last day,
+month and year, respectively, by computing the maximum timestamp for the wrapped
+log and then subtracting [a suitable
 offset](https://pandas.pydata.org/docs/user_guide/timeseries.html?highlight=dateoffset#dateoffset-objects).
+Finally, the `range()` method takes arbitrary *begin* and *end* values.
 
-    period 🠲 <dot> "over" <dot> date-range()
+    range -> <dot> "over" <dot> concrete-range()
 
-    date-range 🠲
+    concrete-range ->
         | "lifetime"
         | "last_day"
         | "last_month"
@@ -220,19 +221,19 @@ Currently supported **statistics** are (1) the number of requests and (2) the
 value counts for a given column. The `status_classes` and `content_types`
 methods are convenient aliases for specific value counts.
 
-    statistic 🠲 <dot> concrete-statistic()
+    statistic -> <dot> concrete-statistic()
 
-    concrete-statistic 🠲
+    concrete-statistic ->
         | "requests"
         | "content_types"
         | "status_classes"
         | "value_counts" <column>
 
-Finally, the optional **display** prints or plots the data — or does both.
+Finally, the **display** prints and/or plots the data as often as you want.
 
-    display 🠲 <dot> concrete-display() display | 𝜀
+    display -> <dot> concrete-display() display | 𝜀
 
-    concrete-display 🠲
+    concrete-display ->
         | "then_print"
         | "then_print" <row-count>
         | "then_plot" ```
