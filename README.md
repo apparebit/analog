@@ -90,7 +90,7 @@ just described, analog can always recreate enriched and combined log file. But
 please, do not delete the `access-logs` or `hostnames.json`!
 
 
-### Log Data Schema
+### Log Schema
 
 Analog combines original properties extracted from the raw access log, derived
 properties added while parsing, and enriching properties added after parsing
@@ -143,7 +143,7 @@ enumerations](https://github.com/apparebit/analog/blob/master/analog/label.py)
 ```
 
 
-### Fluent Analysis
+### Fluent Grammar
 
 Analog's fluent interface makes use of computed properties as well as methods.
 Properties typically distinguish between different types of clauses whereas
@@ -238,6 +238,9 @@ Finally, the **display** prints and/or plots the data as often as you want.
         | "then_print" <row-count>
         | "then_plot" ```
 
+
+### Fluent Implementation
+
 The implementation generally follows the grammar. A class implementing a clause
 typically has the same name as the corresponding nonterminal, though the name is
 CamelCased and prefixed with `Fluent`. All classes representing nonterminals
@@ -246,12 +249,20 @@ provides convenient methods for creating new subclass instances. Since some
 statistics result in series instead of dataframes, that base class and
 `FluentDisplay` are generic.
 
-The main entry point is:
+Since Pandas exposes many of the same methods on both series and dataframes,
+`FluentDisplay` has simple method implementations that do not distinguish
+between the two possible concrete type parameters. In contrast, Pandas requires
+substantially different code for determining value counts for all of the data
+(in case of ranges) or for grouped data (in case of rates). As a result, there
+are two independent implementations for the *statistic* nonterminal,
+`FluentStatistic` and `FluentRate`.
+
+The main entry point for fluent analysis is:
 
     def analyze(frame: pd.DataFrame, cover: Coverage) -> FluentSentence: ...
 
-A second function recombines several (wrapped) series into a dataframe, notably
-for plotting:
+A second function recombines several (wrapped) series into a dataframe again,
+notably for plotting:
 
     def merge(columns: dict[str, FluentTerm[pd.Series]]) -> FluentSentence: ...
 
