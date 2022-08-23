@@ -1,5 +1,4 @@
 from __future__ import annotations
-import argparse
 from collections.abc import Iterator
 import gzip
 import json
@@ -15,7 +14,8 @@ import pyarrow
 import pyarrow.parquet
 
 from .atomic_update import atomic_update
-from .label import ContentType, HttpMethod, HttpProtocolVersion, HttpScheme, HttpStatus
+from .error import StorageError
+from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
 from .month_in_year import MonthInYear
 from .parser import enrich, parse_all_lines
 
@@ -28,16 +28,14 @@ from .parser import enrich, parse_all_lines
 #  2. content_type to status_class are added by parse_line() to simplify analysis;
 #  3. client_name to is_bot are added by enrich() to add further information.
 
-LOG_SCHEMA: dict[str, Any] = {
+LOG_SCHEMA: dict[str, str | pd.CategoricalDtype] = {
     # Properties included in access log
     "client_address": "string",
     "timestamp": "datetime64[ns, UTC]",
     "method": pd.CategoricalDtype(categories=tuple(HttpMethod)),
     "path": "string",
     "query": "string",
-    "protocol": pd.CategoricalDtype(
-        categories=tuple(HttpProtocolVersion), ordered=True
-    ),
+    "protocol": pd.CategoricalDtype(categories=tuple(HttpProtocol), ordered=True),
     "status": "int16",
     "size": "int32",
     "referrer": "string",
@@ -84,36 +82,36 @@ def to_log_frame(log_data: dict[str, list[Any]]) -> pd.DataFrame:
 class Coverage:
     """The log data's monthly coverage."""
 
-    def __init__(self, ingested_log_path: Path) -> None:
-        if not ingested_log_path.exists():
-            raise ValueError(
-                f"Directory '{ingested_log_path}' with ingested logs does not exist"
+    def __init__(self, enriched_log_path: Path) -> None:
+        if not enriched_log_path.exists():
+            raise StorageError(
+                f'Directory "{enriched_log_path}" with enriched logs does not exist'
             )
 
-        self._root_path = ingested_log_path.parent
+        self._root_path = enriched_log_path.parent
         self._ingested_logs = sorted(
             (
                 (MonthInYear.from_yyyy_mm(p.stem[-7:]), p)
-                for p in ingested_log_path.glob("*-????-??.parquet")
+                for p in enriched_log_path.glob("*-????-??.parquet")
             ),
             key=itemgetter(0),
         )
 
         if not self._ingested_logs:
-            raise ValueError(
-                f"Directory '{ingested_log_path}' contains no enriched logs"
+            raise StorageError(
+                f'Directory "{enriched_log_path}" exits but contains no enriched logs'
             )
 
         self._domain: str = self._ingested_logs[0][1].stem[:-8]
 
         if any(self._domain != p.stem[:-8] for _, p in self._ingested_logs):
-            raise ValueError(
-                f"Directory '{ingested_log_path}' contains enriched logs "
-                "for several domains"
+            raise StorageError(
+                f'Directory "{enriched_log_path}" contains enriched logs '
+                'for several domains'
             )
 
-        self._start: MonthInYear = self._ingested_logs[0][0]
-        self._stop: MonthInYear = self._ingested_logs[-1][0]
+        self._begin: MonthInYear = self._ingested_logs[0][0]
+        self._end: MonthInYear = self._ingested_logs[-1][0]
 
         self._days = 0
         self._months = 0
@@ -122,15 +120,15 @@ class Coverage:
         self._total_requests = 0
 
     @property
-    def start(self) -> MonthInYear:
-        return self._start
+    def begin(self) -> MonthInYear:
+        return self._begin
 
     @property
-    def stop(self) -> MonthInYear:
-        return self._stop
+    def end(self) -> MonthInYear:
+        return self._end
 
     def name_with_suffix(self, suffix: str) -> str:
-        return f"{self._domain}-{self._start}-{self._stop}{suffix}"
+        return f"{self._domain}-{self._begin}-{self._end}{suffix}"
 
     def path_with_suffix(self, suffix: str) -> Path:
         return self._root_path / self.name_with_suffix(suffix)
@@ -141,7 +139,7 @@ class Coverage:
     def register_log_data(self, month_in_year: MonthInYear, data: pd.DataFrame) -> None:
         key = str(month_in_year)
 
-        assert self._start <= month_in_year <= self._stop
+        assert self._begin <= month_in_year <= self._end
         assert key not in self._monthly_requests
 
         self._days += month_in_year.days()
@@ -152,12 +150,12 @@ class Coverage:
         self._total_requests += requests
 
     def summary(self) -> dict[str, object]:
-        cursor = self._start
+        cursor = self._begin
         days = cursor.days()
         months = 1
         missing: list[str] = []
 
-        while cursor < self._stop:
+        while cursor < self._end:
             cursor = cursor.next()
             key = str(cursor)
             if key in self._monthly_requests:
@@ -175,8 +173,8 @@ class Coverage:
             "requests": self._total_requests,
             "days": self._days,
             "months": self._months,
-            "start": str(self._start),
-            "stop": str(self._stop),
+            "begin": str(self._begin),
+            "end": str(self._end),
             "missing": ", ".join(missing) if missing else None,
         }
 
@@ -193,38 +191,38 @@ class DataManager:
     """A data manager."""
 
     @staticmethod
-    def _check_directory_exists(description: str, path: Path) -> None:
-        if not path.exists():
-            raise ValueError(f"{description} '{path}' does not exist")
-        elif not path.is_dir():
-            raise ValueError(f"{description} '{path}' is not a directory")
+    def _check_directory_exists(path: Path, is_root: bool) -> None:
+        if path.is_dir():
+            return
+        if is_root:
+            raise StorageError(f'Data directory "{path}" does not exist')
+        raise StorageError(
+            f'Data directory "{path.parent}" ' f'has no "{path.name}" subdirectory'
+        )
 
     @staticmethod
     def _find_latest_location_db(path: Path) -> Path:
         databases = [p for p in path.glob("city-????-??-??.mmdb") if p.is_file()]
         if databases:
             return max(databases)
-        raise ValueError(
-            f"'{path}' must contain at least one IP location database at city "
-            "resolution named like 'city-2022-07-11.mmdb'. If there are more "
-            "than one such database, the most recent is used."
+        raise StorageError(
+            f'"{path}" contains no IP location database '
+            'named like "city-2022-07-11.mmdb"'
         )
 
     def __init__(self, root: Path) -> None:
         # Set up this data manager's configuration state.
         self._root = root
-        DataManager._check_directory_exists("root", root)
+        DataManager._check_directory_exists(root, is_root=True)
 
         self._access_log_path = root / "access-logs"
-        DataManager._check_directory_exists("Access logs", self._access_log_path)
+        DataManager._check_directory_exists(self._access_log_path, is_root=False)
         self._enriched_log_path = root / "enriched-logs"
         self._enriched_log_path.mkdir(exist_ok=True)
 
         self._hostname_db_path = root / "hostnames.json"
-        location_database_path = root / "location_db"
-        DataManager._check_directory_exists(
-            "location database directory", location_database_path
-        )
+        location_database_path = root / "location-db"
+        DataManager._check_directory_exists(location_database_path, is_root=False)
         self._location_db_path = DataManager._find_latest_location_db(
             location_database_path
         )
@@ -256,9 +254,9 @@ class DataManager:
         if self._domain == domain:
             return month_in_year
 
-        raise ValueError(
-            f"'{self._access_log_path}' contains access logs for "
-            f"more than one domain: {self._domain} and {domain}"
+        raise StorageError(
+            f'"{self._access_log_path}" contains access logs for '
+            f'domains {self._domain} and {domain}'
         )
 
     def ingest_access_log(self, path: Path) -> pd.DataFrame:
@@ -410,8 +408,13 @@ class DataManager:
         return self._log_data, self._coverage
 
 
-def latest_log_data(options: argparse.Namespace) -> tuple[pd.DataFrame, Coverage]:
-    manager = DataManager(options.root)
-    if options.clean:
+def latest_log_data(
+    root: str | Path,
+    clean: bool = False,
+    incremental: bool = False,
+    **_: object,
+) -> tuple[pd.DataFrame, Coverage]:
+    manager = DataManager(Path(root))
+    if clean:
         manager.clean()
-    return manager.prepare_log_data(incremental=options.incremental)
+    return manager.prepare_log_data(incremental=incremental)
