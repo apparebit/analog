@@ -1,7 +1,7 @@
 from analog.label import (
     HttpScheme,
     HttpMethod,
-    HttpProtocolVersion,
+    HttpProtocol,
     ContentType,
     HttpStatus,
 )
@@ -19,9 +19,9 @@ def test_method() -> None:
 
 
 def test_protocol_version() -> None:
-    assert str(HttpProtocolVersion.HTTP_09) == "0.9"
-    assert HttpProtocolVersion("1.1") == HttpProtocolVersion.HTTP_11
-    assert HttpProtocolVersion["HTTP_30"] == HttpProtocolVersion.HTTP_30
+    assert str(HttpProtocol.HTTP_09) == "0.9"
+    assert HttpProtocol("1.1") == HttpProtocol.HTTP_11
+    assert HttpProtocol["HTTP_30"] == HttpProtocol.HTTP_30
 
 
 def test_content_type() -> None:

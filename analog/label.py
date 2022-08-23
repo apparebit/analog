@@ -42,7 +42,7 @@ class HttpMethod(EnumLabel):
     TRACE = auto()
 
 
-class HttpProtocolVersion(EnumLabel):
+class HttpProtocol(EnumLabel):
     """The HTTP protocol version."""
 
     HTTP_09 = "0.9"
