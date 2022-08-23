@@ -1,199 +1,218 @@
 from __future__ import annotations
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeAlias, TypeVar
 
 import pandas as pd
 
 from .data_manager import Coverage
-from .label import ContentType, HttpMethod, HttpStatus, HttpStatus
+from .label import ContentType, HttpMethod, HttpProtocol, HttpStatus
 
 
-SeriesWrapper = TypeVar('SeriesWrapper', bound='Seriesful')
-FrameWrapper = TypeVar('FrameWrapper', bound='Frameful')
+DT = TypeVar("DT", pd.Series, pd.DataFrame)
+FrameWrapper = TypeVar("FrameWrapper", bound="Storage[pd.DataFrame]")
 
-SeriesMapper = Callable[[pd.DataFrame], pd.Series]
-FrameMapper = Callable[[pd.DataFrame], pd.DataFrame]
+FrameMapper: TypeAlias = Callable[[pd.DataFrame], pd.DataFrame]
+SeriesMapper: TypeAlias = Callable[[pd.DataFrame], pd.Series]
 
 
-class Seriesful:
-    def __init__(self, series: pd.Series, cover: Coverage) -> None:
-        self._series = series
-        self._cover = cover
-
-    @property
-    def series(self) -> pd.Series:
-        return self._series
+class Storage(Generic[DT]):
+    def __init__(self, data: DT, cover: Coverage) -> None:
+        self._data: DT = data
+        self._cover: Coverage = cover
 
     @property
-    def coverage(self) -> Coverage:
-        return self._cover
-
-
-class FluentSeriesDisplay(Seriesful):
-    def then_print(self, entries: Optional[int] = None) -> FluentSeriesDisplay:
-        if entries is not None:
-            print(self._series.head(entries))
-        else:
-            print(self._series.to_string())
-        return self
-
-    def then_plot(self, **kwargs: object) -> FluentSeriesDisplay:
-        self._series.plot(**kwargs)
-        return self
-
-
-# ======================================================================================
-
-
-class Frameful:
-    def __init__(self, frame: pd.DataFrame, cover: Coverage) -> None:
-        self._frame = frame
-        self._cover = cover
-
-    @property
-    def frame(self) -> pd.DataFrame:
-        return self._frame
+    def data(self) -> DT:
+        return self._data
 
     @property
     def coverage(self) -> Coverage:
         return self._cover
 
-    def handoff(self, wrapper: type[FrameWrapper]) -> FrameWrapper:
-        return wrapper(self._frame, self._cover)
+    def handoff(
+        self: Storage[pd.DataFrame], wrapper: type[FrameWrapper]
+    ) -> FrameWrapper:
+        return wrapper(self._data, self._cover)
 
-    def map(self, wrapper: type[FrameWrapper], mapper: FrameMapper) -> FrameWrapper:
-        return wrapper(mapper(self._frame), self._cover)
+    def map(
+        self: Storage[pd.DataFrame], wrapper: type[FrameWrapper], mapper: FrameMapper
+    ) -> FrameWrapper:
+        return wrapper(mapper(self._data), self._cover)
 
     def filter(
-        self, wrapper: type[FrameWrapper], predicate: SeriesMapper
+        self: Storage[pd.DataFrame],
+        wrapper: type[FrameWrapper],
+        predicate: SeriesMapper,
     ) -> FrameWrapper:
-        return wrapper(self._frame[predicate(self._frame)], self._cover)
-
-    def serialize(
-        self, wrapper: type[SeriesWrapper], mapper: SeriesMapper
-    ) -> SeriesWrapper:
-        return wrapper(mapper(self._frame), self._cover)
+        return wrapper(self._data[predicate(self._data)], self._cover)
 
 
-# --------------------------------------------------------------------------------------
-# Normally, FluentPhrase would be defined here. It starts fluent phrases after
-# all. Alas, it allows skipping straight to display and hence is defined at end
-# of module.
-
-
-class FluentFilter(Frameful):
-    def bots(self) -> FluentPhrase:
-        return self.filter(FluentPhrase, lambda df: df["is_bot"])
-
-    def humans(self) -> FluentPhrase:
-        return self.filter(FluentPhrase, lambda df: ~df["is_bot"])
-
-    def get(self) -> FluentPhrase:
-        return self.filter(FluentPhrase, lambda df: df["method"] == HttpMethod.GET)
-
-    def post(self) -> FluentPhrase:
-        return self.filter(FluentPhrase, lambda df: df["method"] == HttpMethod.POST)
-
-    # FIXME awkward method name
-    def has(self, content_type: ContentType) -> FluentPhrase:
-        return self.filter(FluentPhrase, lambda df: df["content_type"] == content_type)
-
-    def markup(self) -> FluentPhrase:
-        return self.filter(
-            FluentPhrase, lambda df: df["content_type"] == ContentType.MARKUP
-        )
-
-    def successful(self) -> FluentPhrase:
-        return self.filter(
-            FluentPhrase, lambda df: df["status_class"] == HttpStatus.SUCCESSFUL
-        )
-
-    def redirection(self) -> FluentPhrase:
-        return self.filter(
-            FluentPhrase, lambda df: df["status_class"] == HttpStatus.REDIRECTION
-        )
-
-    def client_error(self) -> FluentPhrase:
-        return self.filter(
-            FluentPhrase, lambda df: df["status_class"] == HttpStatus.CLIENT_ERROR
-        )
-
-    def not_found(self) -> FluentPhrase:
-        return self.filter(FluentPhrase, lambda df: df["status"] == 404)
-
-    def server_error(self) -> FluentPhrase:
-        return self.filter(
-            FluentPhrase, lambda df: df["status_class"] == HttpStatus.SERVER_ERROR
-        )
-
-
-class FluentDuration(Frameful):
-    def last_month(self) -> FluentBreakdown:
-        one_month_ago = self._frame["timestamp"].max() - pd.DateOffset(months=1)
-        return self.filter(FluentBreakdown, lambda df: df["timestamp"] > one_month_ago)
-
-    def last_year(self) -> FluentBreakdown:
-        one_year_ago = self._frame["timestamp"].max() - pd.DateOffset(years=1)
-        return self.filter(FluentBreakdown, lambda df: df["timestamp"] > one_year_ago)
-
-
-class FluentBreakdown(Frameful):
-    # FIXME: Need a way to bypass by(); rename by()
-    def by(self, column: str) -> FluentSeriesDisplay:
-        return self.serialize(FluentSeriesDisplay, lambda df: df[column].value_counts())
-
-
-class FluentRequestRate(Frameful):
-    def per_day(self) -> FluentSeriesDisplay:
-        return self.serialize(
-            FluentSeriesDisplay,
-            lambda df: df.resample('D', on='timestamp').size(),  # type: ignore [no-untyped-call]
-        )
-
-    def per_month(self) -> FluentSeriesDisplay:
-        return self.serialize(
-            FluentSeriesDisplay,
-            lambda df: df.resample('MS', on='timestamp').size(),  # type: ignore [no-untyped-call]
-        )
-
-
-class FluentFrameDisplay(Frameful):
-    def then_print(self, entries: Optional[int] = None) -> FluentFrameDisplay:
-        if entries is not None:
-            print(self._frame.head(entries))
-        else:
-            print(self._frame.to_string())
-        return self
-
-    def then_plot(self, **kwargs: object) -> FluentFrameDisplay:
-        self._frame.plot(**kwargs)
-        return self
-
-
-class FluentPhrase(FluentFrameDisplay):
+class FluentSentence(Storage[pd.DataFrame]):
     @property
     def only(self) -> FluentFilter:
         """Filter out requests that do not meet the criterion."""
         return self.handoff(FluentFilter)
 
     @property
-    def during(self) -> FluentDuration:
-        """Filter out requests older than a month or a year."""
-        return self.handoff(FluentDuration)
+    def monthly(self) -> FluentRate:
+        """Compute monthly breakdown of a column."""
+        return self.handoff(FluentRate)
 
     @property
-    def as_requests(self) -> FluentRequestRate:
-        """Convert to requests per month or day."""
-        return self.handoff(FluentRequestRate)
+    def over(self) -> FluentRange:
+        """Filter out requests older than a month or a year."""
+        return self.handoff(FluentRange)
+
+    @property
+    def as_is(self) -> FluentDisplay[pd.DataFrame]:
+        return self.handoff(FluentDisplay)
+
+
+class FluentFilter(Storage[pd.DataFrame]):
+    def bots(self) -> FluentSentence:
+        return self.filter(FluentSentence, lambda df: df["is_bot"])
+
+    def humans(self) -> FluentSentence:
+        return self.filter(FluentSentence, lambda df: ~df["is_bot"])
+
+    def get(self) -> FluentSentence:
+        return self.filter(FluentSentence, lambda df: df["method"] == HttpMethod.GET)
+
+    def post(self) -> FluentSentence:
+        return self.filter(FluentSentence, lambda df: df["method"] == HttpMethod.POST)
+
+    def markup(self) -> FluentSentence:
+        return self.filter(
+            FluentSentence, lambda df: df["content_type"] == ContentType.MARKUP
+        )
+
+    def successful(self) -> FluentSentence:
+        return self.filter(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.SUCCESSFUL
+        )
+
+    def redirection(self) -> FluentSentence:
+        return self.filter(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.REDIRECTION
+        )
+
+    def client_error(self) -> FluentSentence:
+        return self.filter(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.CLIENT_ERROR
+        )
+
+    def not_found(self) -> FluentSentence:
+        return self.filter(FluentSentence, lambda df: df["status"] == 404)
+
+    def server_error(self) -> FluentSentence:
+        return self.filter(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.SERVER_ERROR
+        )
+
+    _COLUMNS = {
+        ContentType: "content_type",
+        HttpMethod: "method",
+        HttpProtocol: "protocol",
+        HttpStatus: "status_class",
+    }
+
+    def having(
+        self, criterion: ContentType | HttpMethod | HttpProtocol | HttpStatus
+    ) -> FluentSentence:
+        """
+        Filter out all rows that do not match the given criterion. The column to
+        filter is automatically determined based on the type of criterion. For
+        that reason, this method only handles columns with categorical types.
+        """
+        column = FluentFilter._COLUMNS[type(criterion)]
+        return self.filter(FluentSentence, lambda df: df[column] == criterion)
+
+
+class FluentRate(Storage[pd.DataFrame]):
+    def requests(self) -> FluentDisplay[pd.Series]:
+        ts = self._data["timestamp"]
+        return FluentDisplay(
+            self._data.groupby([ts.dt.year, ts.dt.month]).size(),  # type: ignore
+            self._cover,
+        )
+
+    def content_types(self) -> FluentDisplay[pd.DataFrame]:
+        return self.value_counts("content_type")
+
+    def status_classes(self) -> FluentDisplay[pd.DataFrame]:
+        return self.value_counts("status_class")
+
+    def value_counts(self, column: str) -> FluentDisplay[pd.DataFrame]:
+        ts = self._data["timestamp"]
+        df = (
+            self._data.groupby([ts.dt.year, ts.dt.month, column])  # type: ignore
+            .size()
+            .unstack(fill_value=0)
+        )
+        return FluentDisplay(
+            df[self._cover.begin : self._cover.end], self._cover  # type: ignore
+        )
+
+
+class FluentRange(Storage[pd.DataFrame]):
+    def lifetime(self) -> FluentStatistic:
+        return self.handoff(FluentStatistic)
+
+    def last_day(self) -> FluentStatistic:
+        latest = self._data["timestamp"].max()
+        return self.range(latest - pd.DateOffset(days=1), latest)
+
+    def last_month(self) -> FluentStatistic:
+        latest = self._data["timestamp"].max()
+        return self.range(latest - pd.DateOffset(months=1), latest)
+
+    def last_year(self) -> FluentStatistic:
+        latest = self._data["timestamp"].max()
+        return self.range(latest - pd.DateOffset(years=1), latest)
+
+    def range(self, begin: pd.Timestamp, end: pd.Timestamp) -> FluentStatistic:
+        return self.filter(
+            FluentStatistic, lambda df: df["timestamp"].between(begin, end)
+        )
+
+
+class FluentStatistic(Storage[pd.DataFrame]):
+    def requests(self) -> int:
+        return len(self._data)
+
+    def content_types(self) -> FluentDisplay[pd.Series]:
+        return self.value_counts("content_type")
+
+    def status_classes(self) -> FluentDisplay[pd.Series]:
+        return self.value_counts("status_class")
+
+    def value_counts(self, column: str) -> FluentDisplay[pd.Series]:
+        return FluentDisplay(self._data[column].value_counts(), self._cover)
+
+
+class FluentDisplay(Storage[DT]):
+    def then_print(self, rows: Optional[int] = None) -> FluentDisplay[DT]:
+        if rows is None:
+            print(self._data.to_string())
+        else:
+            print(self._data.head(rows))
+        return self
+
+    def then_plot(self, **kwargs: object) -> FluentDisplay[DT]:
+        self._data.plot(**kwargs)
+        return self
 
 
 # ======================================================================================
 
 
-def analyze(frame: pd.DataFrame, cover: Coverage) -> FluentPhrase:
-    return FluentPhrase(frame, cover)
+def analyze(frame: pd.DataFrame, cover: Coverage) -> FluentSentence:
+    """
+    Analyze the dataframe and its coverage. This function returns the wrapped
+    dataframe and coverage, ready for fluent processing.
+    """
+    return FluentSentence(frame, cover)
 
 
-def merge(columns: dict[str, Seriesful]) -> FluentPhrase:
+def merge(columns: dict[str, Storage[pd.Series]]) -> FluentSentence:
     """
     Merge the named series as columns in a new, wrapped dataframe. All series
     must have the same coverage, i.e., be derrived from the same original
@@ -205,6 +224,6 @@ def merge(columns: dict[str, Seriesful]) -> FluentPhrase:
         elif cover is not wrapper.coverage:
             raise ValueError(f'Series {columns} have different coverage')
 
-    return FluentPhrase(
-        pd.concat([s.series.rename(n) for n, s in columns.items()], axis=1), cover
+    return FluentSentence(
+        pd.concat([s.data.rename(n) for n, s in columns.items()], axis=1), cover
     )
