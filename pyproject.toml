@@ -3,8 +3,8 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "analogue"
-description="ANA/lyze/LOG: Tooling for analyzing Apache access logs"
+name = "analog2020"
+description="a modern approach to analyzing web server access logs"
 requires-python = ">=3.10"
 authors = [{name = "Robert Grimm", email = "apparebit@gmail.com"}]
 
