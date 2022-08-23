@@ -28,7 +28,7 @@ from .parser import enrich, parse_all_lines
 #  2. content_type to status_class are added by parse_line() to simplify analysis;
 #  3. client_name to is_bot are added by enrich() to add further information.
 
-LOG_SCHEMA: dict[str, str | pd.CategoricalDtype] = {
+LOG_SCHEMA: dict[str, Any] = {
     # Properties included in access log
     "client_address": "string",
     "timestamp": "datetime64[ns, UTC]",
