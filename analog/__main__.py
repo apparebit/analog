@@ -80,21 +80,22 @@ def main(args: None | list[str] = None) -> None:
         # Delay import of data manager module until after numexpr has been configured.
         from .data_manager import latest_log_data
 
-        frame, cover = latest_log_data(**vars(options))
+        frame, _ = latest_log_data(**vars(options))
 
+        # Monthly page views: successful GET requests for markup not made by bots.
         from .analyzer import analyze
 
-        series = (
-            analyze(frame, cover)
-            .only.humans()
-            .only.get()
-            .only.markup()
+        page_views = (
+            analyze(frame)
             .only.successful()
+            .only.GET()
+            .only.markup()
+            .only.humans()
             .monthly.requests()
             .data
         )
 
-        s = series.to_string()
+        s = page_views.to_string()
         s = s.replace("-01 00:00:00+00:00", "")
         konsole.info("Monthly page views", detail=s.splitlines()[1:-1])
 
