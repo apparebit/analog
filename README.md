@@ -1,7 +1,16 @@
 # Ana(lyze) Log(s)
 
-This package implements a modern, 2020s approach to analyzing webserver access
-logs. It builds on two technologies that have become ubiquitous when it comes to
+The 2020s approach to analyzing webserver access logs!
+
+Keep on reading for a top-down description of analog's features. Or start by
+reading [the Python
+notebook](https://github.com/apparebit/analog/blob/master/workbook.ipynb) that
+uses analog to analyze [my own website's](https://apparebit.com) access logs.
+
+
+## Overview
+
+Analog builds on two technologies that have become ubiquitous when it comes to
 data processing:
 
   * [Notebooks](https://jupyter.org), which provide an effective graphical
@@ -158,64 +167,66 @@ selection, and (3) display:
 
     sentence -> filters grouping-and-selection display
 
-There are zero or more **filters**, each starting with the `.only` property and
-followed by a method invocation:
+There are zero or more **filters**, which generally start with the `.only`
+property but use `.over` for time ranges.
 
-    filters -> filter filters | 𝜀
+    filters -> filter filters | range filters | 𝜀
 
     filter -> <dot> "only" <dot> filter-criterion()
 
     filter-criterion ->
         | "bots"
         | "humans"
-        | "get"
-        | "post"
+        | "GET"
+        | "POST"
         | "markup"
         | "successful"
         | "redirection"
         | "client_error"
         | "server_error"
         | "not_found"
-        | "having" <enum-constant>
+        | "has" <enum-constant>
+        | "equals" <column> <value>
+        | "contains" <column> <value>
 
-The `having()` method can filter on the `content_type`, `method`, `protocol` and
-`status_class` column, which is implicit in the type of the given enumeration
-constant. In fact, all other filter methods with the exception of `bots()`,
-`humans()`, and `not_found()` are convenient aliases for invoking `having()`
-with a specific enumeration constant.
+The filter criterion contains several convenience methods that abstract over
+common queries. The `has()` method is more general and can filter on the
+`content_type`, `method`, `protocol` and `status_class` column. Since the
+enumeration constant uniquely identifies the column already, it need not be
+provided. In contrast, the `equals()` method generalizes `has()` for columns
+that do not have a categorical type and hence the column name must be provided.
+Finally, the `contains()` method handles a common filter for string-valued data.
 
-**Grouping and selection** consists of either a rate or range followed by a
-statistic. Range's `lifetime()` method covers the entire log and hence serves as
-an effective bypass of rate or range. The `as_is` property serves as bypass of
-grouping and selection. Requiring explicit bypass arguably is less elegant than
-just omitting unnecessary clauses. At the same time, explicit bypass keeps the
-implementation notably simpler.
+    range -> <dot> "over" <dot> range-criterion()
+
+    range-criterion ->
+        | "last_day"
+        | "last_month"
+        | "last_year"
+        | "range" <begin> <end>
+
+In contrast to Pandas' expressive and complex representations for times and
+dates, analog's **range** is quite simple: It either is one of the fixed
+relative ranges or requires two timestamps for its beginning and end. If your
+analysis focuses on calendar months, you may find that analog's `MonthInYear`
+and `MonthlyRange` make the generation of timestamps corresponding to
+start-of-month and end-of-month rather easy. To ensure that all timestamps are
+comparable, analog only handles those with timezone and generally normalizes to
+UTC.
+
+**Grouping and selection** consists of a rate and statistic, just a statistic by
+itself, or an explicit bypass. Requiring explicit bypass arguably is less
+elegant than just omitting unnecessary clauses. But it also keeps the
+implementation simpler and hence won out.
 
     grouping-and-selection ->
         | rate statistic
-        | range statistic
+        | statistic
         | <dot> "as_is"
 
 A **rate** is indicated by the `.monthly` property.
 
     rate -> <dot> "monthly"
-
-A **range** is indicated by the `.over` property followed by a method specifying
-the duration of the range. The `lifetime()` method covers the entire log. The
-`last_day()`, `last_month()`, and `last_year()` methods cover the last day,
-month and year, respectively, by computing the maximum timestamp for the wrapped
-log and then subtracting [a suitable
-offset](https://pandas.pydata.org/docs/user_guide/timeseries.html?highlight=dateoffset#dateoffset-objects).
-Finally, the `range()` method takes arbitrary *begin* and *end* values.
-
-    range -> <dot> "over" <dot> concrete-range()
-
-    concrete-range ->
-        | "lifetime"
-        | "last_day"
-        | "last_month"
-        | "last_year"
-        | "range" <begin> <end>
 
 Currently supported **statistics** are (1) the number of requests and (2) the
 value counts for a given column. The `status_classes` and `content_types`
@@ -254,8 +265,8 @@ Since Pandas exposes many of the same methods on both series and dataframes,
 between the two possible concrete type parameters. In contrast, Pandas requires
 substantially different code for determining value counts for all of the data
 (in case of ranges) or for grouped data (in case of rates). As a result, there
-are two independent implementations for the *statistic* nonterminal,
-`FluentStatistic` and `FluentRate`.
+are two independent implementations for the *statistic* nonterminal, as part of
+`FluentSentence` and as `FluentRate`.
 
 The main entry point for fluent analysis is:
 
