@@ -1,4 +1,5 @@
-from analog.month_in_year import MonthInYear
+from analog.month_in_year import MonthInYear, RangeOfMonths
+import pandas as pd
 
 
 def test_month_in_year() -> None:
@@ -45,3 +46,12 @@ def test_month_in_year() -> None:
     assert m2 >= m2
     assert m2 > m1
     assert m1 != m2
+
+    assert m1.start == pd.Timestamp("2020-04-01 00:00:00+00:00")
+    assert m1.stop == pd.Timestamp("2020-04-30 23:59:59.999999999+00:00")
+    assert m2.start == pd.Timestamp("2020-06-01 00:00:00+00:00")
+    assert m2.stop == pd.Timestamp("2020-06-30 23:59:59.999999999+00:00")
+
+    range = RangeOfMonths(m1, m2)
+    assert range.as_slice() == slice((2020, 4), (2020, 6))
+    assert range.as_slice() == slice(m1, m2)
