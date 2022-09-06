@@ -17,35 +17,36 @@ class _FluentTerm(Generic[_DT]):
         self._data: _DT = data
         self._filters = filters
 
-    @property
-    def data(self) -> _DT:
+    def data(self, *, always_copy: bool = True) -> _DT:
         """
-        Get the wrapped series or dataframe. If the wrapped object is a series,
-        this property returns the series as is. However, if it is a dataframe,
-        it returns a copy or, if the wrapper resulted from applying one or more
-        filters, the dataframe resulting from the evaluation of the filters.
+        Unwrap the underlying series or dataframe. When `always_copy` is
+        `False`, this method returns the wrapped value unless this term includes
+        (unevaluated) filters — in which case it returns the result of
+        evaluating the filters on the wrapped value. When `always_copy` is
+        `True`, this method returns a copy even when this term has no filters.
         """
-        df = self._data
-        if isinstance(df, pd.Series):
-            return df
+        data = self._data
+        if isinstance(data, pd.Series):
+            return data.copy() if always_copy else data
 
-        # Somehow, mypy doesn't update df's type based on the above conditional.
-        assert isinstance(df, pd.DataFrame)
+        # Boo mypy, boo! _DT either is a series or a dataframe. Since the above
+        # conditional already took care of series, there is only one other type
+        # left and this assertion shouldn't be necessary. Also, crashing on
+        # match statements just is bad form.
+        assert isinstance(data, pd.DataFrame)
 
         filters = self._filters
-        count = len(filters)
-        if count == 0:
-            return df.copy()
-        elif count == 1:
-            return df[filters[0](df)]
-        else:
-            selection = filters[0](df)
-            for filter in filters[1:]:
-                selection &= filter(df)
-            return df[selection]
 
-    def __len__(self) -> int:
-        return len(self._data)
+        filter_count = len(filters)
+        if filter_count == 0:
+            return data.copy() if always_copy else data
+        elif filter_count == 1:
+            return data[filters[0](data)]
+
+        selection = filters[0](data)
+        for filter in filters[1:]:
+            selection &= filter(data)
+        return data[selection]
 
     def handoff(
         self: _FluentTerm[pd.DataFrame], wrapper: type[_FrameWrapper]
@@ -61,7 +62,13 @@ class _FluentTerm(Generic[_DT]):
         return wrapper(self._data, [*self._filters, predicate])
 
 
+# --------------------------------------------------------------------------------------
+
+
 class _FluentSentence(_FluentTerm[pd.DataFrame]):
+    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Filters
+
     @property
     def only(self) -> _FluentFilter:
         """Filter out requests that do not meet the criterion."""
@@ -72,20 +79,20 @@ class _FluentSentence(_FluentTerm[pd.DataFrame]):
         """Filter out requests that do not fall into time range."""
         return self.handoff(_FluentRange)
 
-    @property
-    def monthly(self) -> _FluentRate:
-        """Compute monthly breakdown of a column."""
-        # Force filter evaluation
-        return _FluentRate(self.data, [])
+    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # No Counts
 
     @property
     def as_is(self) -> _FluentDisplay[pd.DataFrame]:
         # Force filter evaluation
-        return _FluentDisplay(self.data, [])
+        return _FluentDisplay(self.data(), [])
+
+    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Counts
 
     def requests(self) -> int:
         # Force filter evaluation
-        return len(self.data)
+        return len(self.data())
 
     def content_types(self) -> _FluentDisplay[pd.Series]:
         return self.value_counts("content_type")
@@ -95,7 +102,19 @@ class _FluentSentence(_FluentTerm[pd.DataFrame]):
 
     def value_counts(self, column: str) -> _FluentDisplay[pd.Series]:
         # Force filter evaluation
-        return _FluentDisplay(self.data[column].value_counts(), [])
+        return _FluentDisplay(self.data()[column].value_counts(), [])
+
+    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Monthly Counts
+
+    @property
+    def monthly(self) -> _FluentRate:
+        """Compute monthly breakdown of a column."""
+        # Force filter evaluation
+        return _FluentRate(self.data(), [])
+
+
+# --------------------------------------------------------------------------------------
 
 
 class _FluentFilter(_FluentTerm[pd.DataFrame]):
@@ -192,6 +211,9 @@ class _FluentRange(_FluentTerm[pd.DataFrame]):
         )
 
 
+# --------------------------------------------------------------------------------------
+
+
 class _FluentRate(_FluentTerm[pd.DataFrame]):
     def _with_year_month(self) -> tuple[pd.DataFrame, pd.Series]:
         df = self._data
@@ -216,7 +238,13 @@ class _FluentRate(_FluentTerm[pd.DataFrame]):
         return _FluentDisplay(df[RangeOfMonths.of(ts).as_slice()], [])
 
 
+# --------------------------------------------------------------------------------------
+
+
 class _FluentDisplay(_FluentTerm[_DT]):
+    def then_format(self) -> list[str]:
+        return self._data.to_string().splitlines()
+
     def then_print(self, rows: Optional[int] = None) -> _FluentDisplay[_DT]:
         if rows is None:
             print(self._data.to_string())
@@ -243,5 +271,5 @@ def analyze(frame: pd.DataFrame) -> _FluentSentence:
 def merge(columns: dict[str, _FluentTerm[pd.Series]]) -> _FluentSentence:
     """Merge the named series as columns in a new, wrapped dataframe."""
     return _FluentSentence(
-        pd.concat([s.data.rename(n) for n, s in columns.items()], axis=1), []
+        pd.concat([s.data().rename(n) for n, s in columns.items()], axis=1), []
     )
