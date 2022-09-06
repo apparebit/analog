@@ -5,78 +5,21 @@ import json
 from operator import itemgetter
 from pathlib import Path
 import shutil
-from typing import Any, Optional
+from typing import Optional
 
 import konsole
-import numpy as np
 import pandas as pd
 import pyarrow
 import pyarrow.parquet
 
 from .atomic_update import atomic_update
 from .error import StorageError
-from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
 from .month_in_year import MonthInYear
 from .parser import enrich, parse_all_lines
+from .schema import coerce, validate
 
 
-# The order of fields in the log schema below is the same as the order of fields
-# in the dictionaries returned from both parser:parse_line() and
-# parser:parse_all_lines() plus the fields added by parser:enrich():
-#
-#  1. client_address to server_address are capturing groups of _LINE_PATTERN regex.
-#  2. content_type to status_class are added by parse_line() to simplify analysis;
-#  3. client_name to is_bot are added by enrich() to add further information.
-
-LOG_SCHEMA: dict[str, Any] = {
-    # Properties included in access log
-    "client_address": "string",
-    "timestamp": "datetime64[ns, UTC]",
-    "method": pd.CategoricalDtype(categories=tuple(HttpMethod)),
-    "path": "string",
-    "query": "string",
-    "protocol": pd.CategoricalDtype(categories=tuple(HttpProtocol), ordered=True),
-    "status": "int16",
-    "size": "int32",
-    "referrer": "string",
-    "user_agent": "string",
-    "server_name": "string",
-    "server_address": "string",
-    # Properties added after the fact
-    "content_type": pd.CategoricalDtype(categories=tuple(ContentType)),
-    "cool_path": "string",
-    "referrer_scheme": pd.CategoricalDtype(categories=tuple(HttpScheme)),
-    "referrer_host": "string",
-    "referrer_path": "string",
-    "status_class": pd.CategoricalDtype(categories=tuple(HttpStatus), ordered=True),
-    # Enriched properties
-    "client_name": "string",
-    "client_latitude": "float64",
-    "client_longitude": "float64",
-    "client_city": "string",
-    "client_country": "string",
-    "agent_family": "string",
-    "agent_version": "string",
-    "os_family": "string",
-    "os_version": "string",
-    "device_family": "string",
-    "device_brand": "string",
-    "device_model": "string",
-    "is_bot": "bool",
-}
-
-
-def new_log_frame() -> pd.DataFrame:
-    """Create a well-typed dataframe."""
-    return pd.DataFrame(columns=list(LOG_SCHEMA.keys())).astype(LOG_SCHEMA)
-
-
-def to_log_frame(log_data: dict[str, list[Any]]) -> pd.DataFrame:
-    """Convert the parsed and enriched log data into a well-typed dataframe."""
-    return pd.DataFrame(log_data).astype(LOG_SCHEMA, copy=False)
-
-
-# --------------------------------------------------------------------------------------
+__all__ = ('Coverage', 'DataManager', 'latest_log_data', 'validate_log_data')
 
 
 class Coverage:
@@ -235,15 +178,21 @@ class DataManager:
         self._log_data: Optional[pd.DataFrame] = None
         self._coverage: Optional[Coverage] = None
 
-    def clean(self) -> None:
-        """Delete enriched logs, combined log, and log coverage."""
+    @property
+    def data(self) -> pd.DataFrame:
+        assert self._log_data is not None
+        return self._log_data
+
+    @property
+    def coverage(self) -> Coverage:
+        assert self._coverage is not None
+        return self._coverage
+
+    def clean_monthly_logs(self) -> None:
+        """Delete previously ingested monthly logs."""
         # Delete all enriched logs but restore empty directory.
         shutil.rmtree(self._enriched_log_path, ignore_errors=True)
         self._enriched_log_path.mkdir()
-
-        # Delete all combined logs and their coverage summaries.
-        for path in self._root.glob("*-????-??-????-??.*"):
-            path.unlink()
 
     def _parse_access_log_name(self, path: Path) -> MonthInYear:
         """Parse name of log file into domain and month of year."""
@@ -259,7 +208,7 @@ class DataManager:
             f'domains {self._domain} and {domain}'
         )
 
-    def ingest_access_log(self, path: Path) -> pd.DataFrame:
+    def parse_and_enrich_log(self, path: Path) -> pd.DataFrame:
         """
         Parse and enrich the access log at the given path, convert the result to
         a dataframe and return it.
@@ -268,9 +217,9 @@ class DataManager:
             log_data = parse_all_lines(lines)
 
         enrich(log_data, self._hostname_db_path, self._location_db_path)
-        return to_log_frame(log_data)
+        return coerce(pd.DataFrame(log_data))
 
-    def ingest_all_access_logs(self) -> None:
+    def ingest_monthly_logs(self) -> None:
         """
         Ingest all access logs by parsing and enriching monthly log files. This method
         skips a monthly log if a Parquet file with the enriched data already exists.
@@ -299,7 +248,7 @@ class DataManager:
                 detail={"from": source_path, "to": target_path},
             )
 
-            df = self.ingest_access_log(source_path)
+            df = self.parse_and_enrich_log(source_path)
             df.to_parquet(target_path)
             did_ingest_access_log = True
 
@@ -349,7 +298,9 @@ class DataManager:
 
         self._coverage = Coverage(self._enriched_log_path)
         if self._did_ingest_access_log:
-            for path in self._root.glob(self._coverage.name_with_suffix(".*")):
+            for path in self._root.glob(self._coverage.name_with_suffix(".json")):
+                path.unlink()
+            for path in self._root.glob(self._coverage.name_with_suffix(".parquet")):
                 path.unlink()
             self._did_ingest_access_log = False
 
@@ -366,55 +317,19 @@ class DataManager:
             konsole.info("Build and save log frame '%s'", target_path)
             self._combine_and_write(self._coverage, target_path)
 
-    def validate_log_data(self) -> None:
-        """Validate the complete dataset."""
-        assert self._log_data_path is not None
-        assert self._log_data is not None
-
-        konsole.info("Validating log frame '%s'", self._log_data_path)
-
-        # Validate that all columns exist and do not have object type. Pandas
-        # falls back onto that type when it can't guess better ones.
-        dtypes = self._log_data.dtypes
-        assert len(dtypes) == len(LOG_SCHEMA)
-
-        object_dt = np.dtype(object)
-        for column in LOG_SCHEMA.keys():
-            assert column in dtypes
-            assert dtypes[column] != object_dt
-
-        # Validate categorical column types:
-        for column in (
-            "content_type",
-            "method",
-            "protocol",
-            "referrer_scheme",
-            "status_class",
-        ):
-            assert isinstance(self._log_data.dtypes[column], pd.CategoricalDtype)
-
-    def prepare_log_data(
-        self, /, incremental: bool = True
-    ) -> tuple[pd.DataFrame, Coverage]:
-        """
-        Ingest monthly frames as necessary, combine them into a full frame, and
-        return that frame after validating it.
-        """
-        self.ingest_all_access_logs()
-        self.combine_monthly_logs(incremental=incremental)  # Sets self._log_data.
-        self.validate_log_data()  # Checks self._log_data.
-        assert self._log_data is not None  # Keeps mypy happy.
-        assert self._coverage is not None
-        return self._log_data, self._coverage
-
 
 def latest_log_data(
     root: str | Path,
     clean: bool = False,
     incremental: bool = False,
     **_: object,
-) -> tuple[pd.DataFrame, Coverage]:
+) -> pd.DataFrame:
     manager = DataManager(Path(root))
     if clean:
-        manager.clean()
-    return manager.prepare_log_data(incremental=incremental)
+        manager.clean_monthly_logs()
+    manager.ingest_monthly_logs()
+    manager.combine_monthly_logs(incremental=incremental)
+    return manager.data
+
+
+validate_log_data = validate
