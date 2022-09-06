@@ -32,6 +32,7 @@ DATA = [
         "method": HttpMethod.GET,
         "path": "/",
         "query": None,
+        "fragment": None,
         "protocol": HttpProtocol.HTTP_20,
         "status": 204,
         "size": 0,
@@ -44,6 +45,8 @@ DATA = [
         "referrer_scheme": None,
         "referrer_host": None,
         "referrer_path": None,
+        "referrer_query": None,
+        "referrer_fragment": None,
         "status_class": HttpStatus.SUCCESSFUL,
     },
     {
@@ -52,6 +55,7 @@ DATA = [
         "method": HttpMethod.POST,
         "path": "/blog/2022/post.html",
         "query": None,
+        "fragment": None,
         "protocol": HttpProtocol.HTTP_11,
         "status": 403,
         "size": 665,
@@ -64,6 +68,8 @@ DATA = [
         "referrer_scheme": HttpScheme.HTTPS,
         "referrer_host": "example.com",
         "referrer_path": "/some/path",
+        "referrer_query": None,
+        "referrer_fragment": None,
         "status_class": HttpStatus.CLIENT_ERROR,
     },
 ]

@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import re
 import socket
-from typing import Any, cast, Optional
+from typing import Any, cast, Optional, TypeAlias
 
 from geoip2.database import Reader as LocationDatabaseReader
 from geoip2.errors import AddressNotFoundError
@@ -17,6 +17,7 @@ from geoip2.models import City as LocationData
 from ua_parser.user_agent_parser import Parse as parse_user_agent
 
 from .atomic_update import atomic_update
+from .error import ParseError
 from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
 
 
@@ -25,27 +26,35 @@ from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
 # ======================================================================================
 
 
-LogData = defaultdict[str, list[Any]]
-
-
-_REFERRER = re.compile(r"^(?P<scheme>https?)://(?P<host>[^/]*)(?P<path>.*)$")
-
-
-_HOST_NAME = r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.?(:\d+)?"
-_IP_ADDRESS = r"\d{1,3}(?:\.\d{1,3}){3}"
+# Since parts of the log are under control of arbitrary internet users, Apache
+# 2.0.49 and later escape octet strings before they are written to the log.
+# Space characters, the backslash, and the double quote are written in C-style
+# notation: `\\b`, `\\n`, `\\r`, `\\t`, `\\v`, `\\\\`, and `\\"`. Other
+# control characters as well as characters with their high bit set are written
+# as hexadecimal escapes: `\\xhh`.
+#
+# While Apache's behavior [is
+# documented](https://httpd.apache.org/docs/2.4/mod/mod_log_config.html),
+# determining which characters are escaped how requires inspecting the source
+# code for the
+# [ap_escape_logitem](https://github.com/apache/httpd/blob/3e835f22affadfcfa3908277611a0e9961ece1c1/server/util.c#L2204)
+# function, which escapes octets before they are logged, and the
+# [gen_test_char.c](https://github.com/apache/httpd/blob/5c385f2b6c8352e2ca0665e66af022d6e936db6d/server/gen_test_char.c#L154)
+# program, which generates the lookup table containing the `T_ESCAPE_LOGITEM`
+# flag for octets that need to be escaped.
 
 _DOUBLE_QUOTED_STRING = r"""
 ["]
 (?:
-    # A two-character escape sequence
     \\[bnrtv\\"] # cspell: disable-line
-    # Or a hexadecimal escape sequence
     | \\x[0-9a-fA-F]{2}
-    # Or any character besides those to begin escape sequences or end strings
     | [^\\"]
 )*
 ["]
 """
+
+_HOST_NAME = r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.?(:\d+)?"
+_IP_ADDRESS = r"\d{1,3}(?:\.\d{1,3}){3}"
 
 _LINE_PATTERN = re.compile(
     fr"""
@@ -59,8 +68,9 @@ _LINE_PATTERN = re.compile(
     "
     (?P<method> [A-Za-z]+)
     [ ]
-    (?P<path> [^ ?]+)
-    (?P<query> [?][^ ]*)?
+    (?P<path> [^?# ]*)
+    (?P<query> [?][^# ]*)?
+    (?P<fragment> [#][^ ]*)?
     [ ]
     HTTP/(?P<protocol> 0\.9|1\.0|1\.1|2\.0|3\.0)
     "
@@ -84,52 +94,45 @@ _LINE_PATTERN = re.compile(
 )
 
 
+_REFERRER = re.compile(
+    r"""
+    ^
+        (?P<scheme> https?)
+        ://
+        (?P<host> [^/?#]*)
+        (?P<path> [^?#]+)?
+        (?P<query> [?][^#]*)?
+        (?P<fragment> [#].*)?
+    $
+""",
+    re.X,
+)
+
+
 def unquote(quoted: str) -> Optional[str]:
     """
-    Unquote the given string.
-
-    Since parts of the log are under control of arbitrary internet users, Apache
-    2.0.49 and later escape octet strings before they are written to the log.
-    Space characters, the backslash, and the double quote are written in C-style
-    notation: `\\b`, `\\n`, `\\r`, `\\t`, `\\v`, `\\\\`, and `\\"`. Other
-    control characters as well as characters with their high bit set are written
-    as hexadecimal escapes: `\\xhh`.
-
-    This function removes the leading and trailing double quotes and unescapes
-    escaped double-quotes. All other escapes are left in place, including
-    escaped backslashes, which ensures that the unquoted string still is
-    well-formed.
-
-    Apache's behavior [is
-    documented](https://httpd.apache.org/docs/2.4/mod/mod_log_config.html) but
-    determining which characters are escaped how requires inspecting the source
-    code for the
-    [ap_escape_logitem](https://github.com/apache/httpd/blob/3e835f22affadfcfa3908277611a0e9961ece1c1/server/util.c#L2204)
-    function, which escapes octets before they are logged, and the
-    [gen_test_char.c](https://github.com/apache/httpd/blob/5c385f2b6c8352e2ca0665e66af022d6e936db6d/server/gen_test_char.c#L154)
-    program, which generates the lookup table containing the `T_ESCAPE_LOGITEM`
-    flag for octets that need to be escaped.
+    Unquote the given string. Since the contents of a quoted string are header
+    values under user control, this method only removes surrounding double
+    quotes but does no further unescaping.
     """
     if quoted == '-' or quoted == '"-"':
         return None
-    return quoted[1:-1].replace('\\"', '"')
+    return quoted[1:-1]
 
 
 def parse_referrer(
     text: str | None,
-) -> tuple[HttpScheme | None, str | None, str | None]:
-    """Parse the referrer components."""
-    if not text:
-        return None, None, None
-
-    parts = _REFERRER.match(text)
-    if not parts:
-        return None, None, None
+) -> tuple[HttpScheme | None, str | None, str | None, str | None, str | None]:
+    """Parse the referrer into scheme, host, path, query, and fragment."""
+    if text is None or (parts := _REFERRER.match(text)) is None:
+        return None, None, None, None, None
 
     return (
         HttpScheme(parts.group("scheme").lower()),
         parts.group("host").lower(),
         parts.group("path"),
+        parts.group("query"),
+        parts.group("fragment"),
     )
 
 
@@ -144,6 +147,11 @@ def parse_timestamp(text: str) -> datetime:
     return timestamp.astimezone(timezone.utc)
 
 
+def normalize_path(path: str) -> str:
+    """Normalize the path."""
+    return path if path else "/"
+
+
 def to_cool_path(path: str) -> str:
     """Make the path suitable for inclusion in a cool URL."""
     if path.endswith("/index.html"):
@@ -155,7 +163,9 @@ def to_cool_path(path: str) -> str:
     return path
 
 
-def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
+def parse_line(
+    line: str, /, derrived_props: bool = True
+) -> Optional[dict[str, object]]:
     """
     Parse one log line. This function returns a dictionary with the following
     properties extracted from the line:
@@ -165,6 +175,7 @@ def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
       * `method`
       * `path`
       * `query`
+      * `fragment`
       * `protocol`
       * `status`
       * `size`
@@ -181,6 +192,8 @@ def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
       * `referrer_scheme`
       * `referrer_host`
       * `referrer_path`
+      * `referrer_query`
+      * `referrer_fragment`
       * `status_class`
 
     During extraction, this function:
@@ -189,13 +202,17 @@ def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
       * Converts `size` and `status` to `int`;
       * Converts `timestamp` to `datetime`;
       * Normalizes `method` to upper case;
+      * Normalizes an empty path to `/`;
       * Normalizes `referrer_scheme` and `referrer_host` to lower case;
       * Normalizes `server_name` to lower case.
 
+    A well-formed HTTP request should not include a fragment in the path or in
+    the referrer. Yet presence of a fragment should only impact log analysis
+    that explicitly accounts for it. Hence, this function does parse fragments,
+    returning them through the `fragment` and `referrer_fragment` properties.
     """
-    match = _LINE_PATTERN.match(line)
-    if match is None:
-        raise ValueError(f"Did not recognize log line '{line}'")
+    if (match := _LINE_PATTERN.match(line)) is None:
+        return None
 
     props = match.groupdict()
     props["method"] = HttpMethod[props["method"].upper()]
@@ -204,21 +221,21 @@ def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
     props["timestamp"] = parse_timestamp(props["timestamp"])
     props["user_agent"] = unquote(props["user_agent"])
 
+    props["path"] = path = normalize_path(props["path"])
     if derrived_props:
-        path = props["path"]
         props["content_type"] = ContentType.of(path)
         props["cool_path"] = to_cool_path(path)
 
-    referrer = unquote(props["referrer"])
-    props["referrer"] = referrer
+    props["referrer"] = referrer = unquote(props["referrer"])
     if derrived_props:
-        scheme, host, path = parse_referrer(referrer)
+        scheme, host, ref_path, query, fragment = parse_referrer(referrer)
         props["referrer_scheme"] = scheme
         props["referrer_host"] = host
-        props["referrer_path"] = path
+        props["referrer_path"] = ref_path
+        props["referrer_query"] = query
+        props["referrer_fragment"] = fragment
 
-    status = int(props["status"])
-    props["status"] = status
+    props["status"] = status = int(props["status"])
     if derrived_props:
         props["status_class"] = HttpStatus.of(status)
 
@@ -228,11 +245,18 @@ def parse_line(line: str, /, derrived_props: bool = True) -> dict[str, object]:
     return props
 
 
+LogData: TypeAlias = defaultdict[str, list[Any]]
+
+
 def parse_all_lines(lines: Iterator[str]) -> LogData:
     """Parse all lines in a log."""
     log_data: LogData = defaultdict(list)
 
-    for log_entry in (parse_line(line) for line in lines):
+    for index, line in enumerate(lines):
+        log_entry = parse_line(line)
+        if log_entry is None:
+            raise ParseError(f'invalid log line {index + 1} "{line}"')
+
         for key, value in log_entry.items():
             log_data[key].append(value)
 
