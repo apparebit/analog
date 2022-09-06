@@ -118,6 +118,7 @@ enumerations](https://github.com/apparebit/analog/blob/master/analog/label.py)
     "method": pd.CategoricalDtype(categories=tuple(HttpMethod)),
     "path": "string",
     "query": "string",
+    "fragment": "string",
     "protocol": pd.CategoricalDtype(categories=tuple(HttpProtocol), ordered=True),
     "status": "int16",
     "size": "int32",
@@ -132,6 +133,8 @@ enumerations](https://github.com/apparebit/analog/blob/master/analog/label.py)
     "referrer_scheme": pd.CategoricalDtype(categories=tuple(HttpScheme)),
     "referrer_host": "string",
     "referrer_path": "string",
+    "referrer_query": "string",
+    "referrer_fragment": "string",
     "status_class": pd.CategoricalDtype(categories=tuple(HttpStatus), ordered=True),
 
     # Enriching properties that depend on external databases:
@@ -254,23 +257,15 @@ Finally, the **display** prints and/or plots the data as often as you want.
 
 The implementation generally follows the grammar. A class implementing a clause
 typically has the same name as the corresponding nonterminal, though the name is
-CamelCased and prefixed with `Fluent`. All classes representing nonterminals
-inherit from the same base class `FluentTerm`, which holds the wrapped state and
-provides convenient methods for creating new subclass instances. Since some
+CamelCased and prefixed with `_Fluent`. All classes representing nonterminals
+inherit from the same base class `_FluentTerm`, which holds the wrapped state
+and provides convenient methods for creating new subclass instances. Since some
 statistics result in series instead of dataframes, that base class and
-`FluentDisplay` are generic.
-
-Since Pandas exposes many of the same methods on both series and dataframes,
-`FluentDisplay` has simple method implementations that do not distinguish
-between the two possible concrete type parameters. In contrast, Pandas requires
-substantially different code for determining value counts for all of the data
-(in case of ranges) or for grouped data (in case of rates). As a result, there
-are two independent implementations for the *statistic* nonterminal, as part of
-`FluentSentence` and as `FluentRate`.
+`_FluentDisplay` are generic.
 
 The main entry point for fluent analysis is:
 
-    def analyze(frame: pd.DataFrame, cover: Coverage) -> FluentSentence: ...
+    def analyze(frame: pd.DataFrame) -> FluentSentence: ...
 
 A second function recombines several (wrapped) series into a dataframe again,
 notably for plotting:
