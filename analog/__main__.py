@@ -1,11 +1,12 @@
 import argparse
 import os
 from pathlib import Path
+import re
 import sys
 
 import konsole
 
-from .error import StorageError
+from .error import AnalogError
 
 
 NUMEXPR_MAX_THREADS = "NUMEXPR_MAX_THREADS"
@@ -68,6 +69,10 @@ def to_options(args: list[str]) -> argparse.Namespace:
     return options
 
 
+_MONTHS = re.compile(r'^(\d{4}[ ][ ]|[ ]{6})(\d\d?)((?<=[ ]\d)[ ])')
+_REALIGNED = r'\1\3\2'
+
+
 def main(args: None | list[str] = None) -> None:
     # If the maximum number of threads for numexpr is not configured, use
     # minimum. This suppresses an annoying announcement to the log.
@@ -78,9 +83,10 @@ def main(args: None | list[str] = None) -> None:
         options = to_options(sys.argv[1:] if args is None else args)
 
         # Delay import of data manager module until after numexpr has been configured.
-        from .data_manager import latest_log_data
+        from .data_manager import latest_log_data, validate_log_data
 
-        frame, _ = latest_log_data(**vars(options))
+        frame = latest_log_data(**vars(options))
+        validate_log_data(frame)
 
         # Monthly page views: successful GET requests for markup not made by bots.
         from .analyzer import analyze
@@ -92,23 +98,21 @@ def main(args: None | list[str] = None) -> None:
             .only.markup()
             .only.humans()
             .monthly.requests()
-            .data
+            .then_format()[1:]
         )
-
-        s = page_views.to_string()
-        s = s.replace("-01 00:00:00+00:00", "")
-        konsole.info("Monthly page views", detail=s.splitlines()[1:-1])
+        page_views = [_MONTHS.sub(_REALIGNED, line) for line in page_views]
+        konsole.info("page views by year and month", detail=page_views)
 
     except KeyboardInterrupt:
-        konsole.warning("Analog detected keyboard interrupt, exiting...")
-    except StorageError as x:
+        konsole.warning("analog detected keyboard interrupt, exiting...")
+    except AnalogError as x:
         konsole.critical(x.args[0])
     except Exception as x:
         konsole.critical(
-            "Oh dear, something has gone terribly wrong: %s", x, exc_info=x
+            "oh dear, something has gone terribly wrong: %s", x, exc_info=x
         )
     else:
-        konsole.info("Happy, happy, joy, joy!")
+        konsole.info("happy, happy, joy, joy!")
 
 
 if __name__ == "__main__":
