@@ -1,11 +1,12 @@
 # Ana(lyze) Log(s)
 
-The 2020s approach to analyzing webserver access logs!
+A modern approach to analyzing webserver access logs!
 
-Keep on reading for a top-down description of analog's features. Or start by
-reading [the Python
-notebook](https://github.com/apparebit/analog/blob/master/workbook.ipynb) that
-uses analog to analyze [my own website's](https://apparebit.com) access logs.
+Keep on reading for a top-down description of analog's features. Or peruse [this
+hands-on
+notebook](https://github.com/apparebit/analog/blob/master/workbook.ipynb). By
+exploring four years of access logs for [my own website](https://apparebit.com),
+it helped me refine analog's interface and implementation.
 
 
 ## Overview
@@ -138,11 +139,14 @@ enumerations](https://github.com/apparebit/analog/blob/master/analog/label.py)
     "status_class": pd.CategoricalDtype(categories=tuple(HttpStatus), ordered=True),
 
     # Enriching properties that depend on external databases:
+    # DNS
     "client_name": "string",
+    # MaxMind's GeoLite2
     "client_latitude": "float64",
     "client_longitude": "float64",
     "client_city": "string",
     "client_country": "string",
+    # ua-parser
     "agent_family": "string",
     "agent_version": "string",
     "os_family": "string",
@@ -151,8 +155,19 @@ enumerations](https://github.com/apparebit/analog/blob/master/analog/label.py)
     "device_brand": "string",
     "device_model": "string",
     "is_bot": "bool",
+    # matomo.org's device detection
+    "bot_category": pd.CategoricalDtype(categories=tuple(BotCategory)),
+    "is_bot2": "bool",
 }
 ```
+
+
+Note that analog uses *two* independent projects' user agent patterns to
+classify bots — [matomo](https://matomo.org) and
+[ua-parser](https://github.com/ua-parser). Each project identifies a good number
+of bots not identified by the other and hence both are considered by analog's
+`only.bots()` and `only.humans()` filters. The combination also helped identify
+a minor misclassification by ua-parser, which is corrected during enrichment.
 
 
 ### Fluent Grammar
@@ -242,6 +257,7 @@ methods are convenient aliases for specific value counts.
         | "content_types"
         | "status_classes"
         | "value_counts" <column>
+        | "unique_values" <column>
 
 Finally, the **display** prints and/or plots the data as often as you want.
 
@@ -250,8 +266,7 @@ Finally, the **display** prints and/or plots the data as often as you want.
     concrete-display ->
         | "then_print"
         | "then_print" <row-count>
-        | "then_plot" ```
-
+        | "then_plot"
 
 ### Fluent Implementation
 
