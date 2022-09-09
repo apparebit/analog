@@ -17,8 +17,16 @@ from geoip2.models import City as LocationData
 from ua_parser.user_agent_parser import Parse as parse_user_agent
 
 from .atomic_update import atomic_update
+from .bot_detector import BotDetector
 from .error import ParseError
-from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
+from .label import (
+    BotCategory,
+    ContentType,
+    HttpMethod,
+    HttpProtocol,
+    HttpScheme,
+    HttpStatus,
+)
 
 
 # ======================================================================================
@@ -341,9 +349,13 @@ def enrich_user_agent(log_data: LogData) -> None:
     assert not log_data["device_brand"]
     assert not log_data["device_model"]
     assert not log_data["is_bot"]
+    assert not log_data["bot_category"]
+    assert not log_data["is_bot2"]
 
     def append_to_column(key: str, value: object) -> None:
         log_data[key].append(value)
+
+    bot_detector = BotDetector()
 
     for user_agent in log_data["user_agent"]:
         if user_agent is None:
@@ -355,6 +367,8 @@ def enrich_user_agent(log_data: LogData) -> None:
             append_to_column("device_brand", None)
             append_to_column("device_model", None)
             append_to_column("is_bot", False)
+            append_to_column("bot_category", BotCategory.NONE)
+            append_to_column("is_bot2", False)
             continue
 
         parts = parse_user_agent(user_agent)
@@ -371,12 +385,19 @@ def enrich_user_agent(log_data: LogData) -> None:
         append_to_column("device_family", device["family"])
         append_to_column("device_brand", device["brand"] or "")
         append_to_column("device_model", device["model"] or "")
-        append_to_column(
-            "is_bot",
+        is_bot = (
             ua["family"] == "Spider"
             or os["family"] == "Spider"
-            or device["family"] == "Spider",
+            or device["family"] == "Spider"
         )
+        # Correct misclassification
+        if is_bot and ua["family"] == "WhatsApp":
+            is_bot = False
+        append_to_column("is_bot", is_bot)
+
+        category = BotCategory.of(bot_detector.lookup(user_agent))
+        append_to_column("bot_category", category)
+        append_to_column("is_bot2", category is not BotCategory.NONE)
 
 
 # --------------------------------------------------------------------------------------

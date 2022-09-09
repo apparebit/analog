@@ -2,7 +2,14 @@ from collections.abc import Mapping, Sized
 from types import MappingProxyType
 
 from .error import ValidationError
-from .label import ContentType, HttpMethod, HttpProtocol, HttpScheme, HttpStatus
+from .label import (
+    BotCategory,
+    ContentType,
+    HttpMethod,
+    HttpProtocol,
+    HttpScheme,
+    HttpStatus,
+)
 
 import numpy as np
 import pandas as pd
@@ -54,6 +61,8 @@ SCHEMA: Mapping[str, str | pd.CategoricalDtype] = MappingProxyType(
         "device_brand": "string",
         "device_model": "string",
         "is_bot": "bool",
+        "bot_category": pd.CategoricalDtype(categories=tuple(BotCategory)),
+        "is_bot2": "bool",
     }
 )
 
