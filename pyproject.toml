@@ -50,6 +50,7 @@ dev = [
     "flit",
     "mypy",
     "pytest",
+    "atheris",  # For fuzzing
 ]
 
 [project.scripts]
