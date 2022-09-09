@@ -28,6 +28,8 @@ dependencies = [
 
     "geoip2",  # IP location DB; brew install libmaxminddb
     "ua-parser-up2date",  # User agent properties
+    "regex",  # For bot detection
+    "ruyaml",  # For bot detection
 
     # Analysis
     # --------
