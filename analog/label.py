@@ -138,3 +138,64 @@ class HttpStatus(EnumLabel):
             return HttpStatus.SERVER_ERROR
 
         raise ValueError(f"Invalid HTTP status {status}")
+
+
+class BotCategory(EnumLabel):
+    """
+    The bot category. `NONE` means that the request didn't include a bot's user
+    agent. In contrast, `GENERIC` means that it did include a bot's user agent,
+    but its purpose is unknown.
+    """
+
+    BENCHMARK = auto()  # Performance
+    CONTENT = auto()  # Including validation and previews
+    GENERIC = auto()
+    MONITORING = auto()  # FIXME: Roll into content and networking
+    NONE = ""
+    NETWORKING = auto()  # Uptime, availability, performance
+    SEARCH = auto()  # Index spider
+    SECURITY = auto()
+    SOCIAL = auto()
+
+    @staticmethod
+    def of(description: dict[str, object] | None) -> BotCategory:
+        if description is None:
+            return BotCategory.NONE
+        if name := description.get('name'):
+            if category := _BOT_CATEGORY_BY_NAME.get(str(name)):
+                return category
+        if label := description.get('category'):
+            if category := _BOT_CATEGORY_BY_LABEL.get(str(label)):
+                return category
+        return BotCategory.GENERIC
+
+
+_BOT_CATEGORY_BY_NAME = {
+    "Amazon Route53 Health Check": BotCategory.NETWORKING,
+    "Castro 2": BotCategory.CONTENT,
+    "Let's Encrypt Validation": BotCategory.SECURITY,
+    "SSL Labs": BotCategory.SECURITY,
+}
+
+
+_BOT_CATEGORY_BY_LABEL = {
+    label: category
+    for category, labels in {
+        BotCategory.BENCHMARK: ["Benchmark"],
+        BotCategory.CONTENT: [
+            "Feed Fetcher",
+            "Feed Parser",
+            "Feed Reader",
+            "Read-it-later Service",
+            "Service Agent",
+            "Validator",
+        ],
+        BotCategory.MONITORING: ["Site Monitor"],
+        BotCategory.NETWORKING: ["Network Monitor"],
+        BotCategory.SEARCH: ["Crawler", "Search bot", "Search tools"],
+        BotCategory.SECURITY: ["Security Checker", "Security search bot"],
+        BotCategory.SOCIAL: ["Social Media Agent"],
+        BotCategory.GENERIC: [""],  # A bot with an empty label still is a bot.
+    }.items()
+    for label in labels
+}
