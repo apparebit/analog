@@ -34,7 +34,7 @@ class Coverage:
         self._root_path = enriched_log_path.parent
         self._ingested_logs = sorted(
             (
-                (MonthInYear.from_yyyy_mm(p.stem[-7:]), p)
+                (MonthInYear.of(p.stem[-7:]), p)
                 for p in enriched_log_path.glob("*-????-??.parquet")
             ),
             key=itemgetter(0),
@@ -196,7 +196,7 @@ class DataManager:
 
     def _parse_access_log_name(self, path: Path) -> MonthInYear:
         """Parse name of log file into domain and month of year."""
-        month_in_year = MonthInYear.from_mmm_yyyy(path.stem[-8:])
+        month_in_year = MonthInYear.of(path.stem[-8:])
         domain = path.stem[:-17]
         if self._domain is None:
             self._domain = domain
@@ -227,7 +227,7 @@ class DataManager:
         # Process access logs in chronological order.
         source_paths = sorted(
             self._access_log_path.glob("*-ssl_log-???-????.gz"),
-            key=lambda p: MonthInYear.from_mmm_yyyy(p.stem[-8:]),
+            key=lambda p: MonthInYear.of(p.stem[-8:]),
         )
 
         did_ingest_access_log = False

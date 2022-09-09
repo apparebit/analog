@@ -1,28 +1,43 @@
 from __future__ import annotations
 from calendar import monthrange
-from datetime import timezone
-import re
-from typing import NamedTuple
+from datetime import datetime, timedelta, timezone, tzinfo
+from typing import NamedTuple, overload, Protocol, runtime_checkable, TYPE_CHECKING
 
-import pandas as pd
+if TYPE_CHECKING:
+    import pandas as pd
 
 
-_SHORT_MONTHS = (
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+SHORT_MONTHS = (
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
 )
 
-_YYYY_MM = re.compile(r"\d\d\d\d[-./_]\d\d")
+
+@runtime_checkable
+class MonthInYearly(Protocol):
+    """
+    The month-in-year protocol, which requires`year` and `month` properties
+    only. `MonthInYear` obviously implements the protocol. So do the standard
+    library's `datetime.datetime` and Panda's `pandas.timestamp`.
+    """
+
+    @property
+    def year(self) -> int:
+        ...
+
+    @property
+    def month(self) -> int:
+        ...
 
 
 class MonthInYear(NamedTuple):
@@ -31,41 +46,45 @@ class MonthInYear(NamedTuple):
     year: int
     month: int
 
+    @overload
     @classmethod
-    def from_mmm_yyyy(cls, text: str) -> MonthInYear:
-        """
-        Create month-in-year from first three letters of month, separator
-        character, and four digit year.
-        """
-        assert len(text) == 8
+    def of(cls, value: MonthInYearly) -> MonthInYear:
+        ...
 
-        year = int(text[4:])
-        month = _SHORT_MONTHS.index(text[:3]) + 1
-        return cls(year=year, month=month)
-
-    @staticmethod
-    def is_yyyy_mm(text: str) -> bool:
-        """Determine whether text is in YYYY-MM format."""
-        if len(text) != 7:
-            return False
-        return bool(_YYYY_MM.fullmatch(text))
+    @overload
+    @classmethod
+    def of(cls, value: str) -> MonthInYear:
+        ...
 
     @classmethod
-    def from_yyyy_mm(cls, text: str) -> MonthInYear:
+    def of(cls, value: MonthInYearly | str) -> MonthInYear:
         """
-        Create month-in-year from four digit year, separator character, and two
-        digit month.
+        Convert the given value into a month-in-year. This method recognizes
+        strings in mmm-yyyy format, using the first three letters of the month
+        in the English language, or yyyy-mm format. It also coerces any
+        month-in-yearly instance into a proper month-in-year.
         """
-        assert len(text) == 7
 
-        year = int(text[:4])
-        month = int(text[-2:])
-        return cls(year=year, month=month)
+        if isinstance(value, MonthInYearly):
+            return cls(value.year, value.month)
 
-    @classmethod
-    def from_timestamp(cls, timestamp: pd.Timestamp) -> MonthInYear:
-        """Create month-in-year from Pandas timestamp."""
-        return cls(year=timestamp.year, month=timestamp.month)
+        assert isinstance(value, str), f'value "{value}" of type {type(value)}'
+
+        if len(value) == 8:
+            # mmm-yyy format
+            try:
+                return cls(int(value[4:]), SHORT_MONTHS.index(value[:3].casefold()) + 1)
+            except:
+                raise ValueError(f'malformed mmm-yyyy string "{value}"')
+
+        if len(value) == 7:
+            # yyyy-mm format
+            try:
+                return cls(int(value[:4]), int(value[-2:]))
+            except:
+                raise ValueError(f'malformed yyyy-mm string "{value}"')
+
+        raise ValueError(f'invalid month-in-year string "{value}"')
 
     def days(self) -> int:
         """Get number of days for this month in year."""
@@ -75,7 +94,7 @@ class MonthInYear(NamedTuple):
     def __str__(self) -> str:
         return f"{self.year:04}-{self.month:02}"
 
-    def __sub__(self, other: MonthInYear) -> int:
+    def __sub__(self, other: MonthInYearly) -> int:
         return (self.year - other.year) * 12 + (self.month - other.month)
 
     def previous(self) -> MonthInYear:
@@ -85,7 +104,7 @@ class MonthInYear(NamedTuple):
         if month == 0:
             year -= 1
             month = 12
-        return self.__class__(year=year, month=month)
+        return self.__class__(year, month)
 
     def next(self) -> MonthInYear:
         """Determine the next month-in-year."""
@@ -94,50 +113,34 @@ class MonthInYear(NamedTuple):
         if month == 13:
             year += 1
             month = 1
-        return self.__class__(year=year, month=month)
+        return self.__class__(year, month)
 
-    @property
-    def start(self) -> pd.Timestamp:
-        """
-        Determine the first moment for this month-in-year. The resulting
-        timestamp uses UTC as timezone.
-        """
-        return pd.Timestamp(str(self), tz=timezone.utc)
+    def start(self, tz: tzinfo = timezone.utc) -> datetime:
+        """Determine the first moment for this month-in-year."""
+        return datetime(self.year, self.month, 1, 0, 0, 0, 0, tz)
 
-    @property
-    def stop(self) -> pd.Timestamp:
-        """
-        Determine the last moment for this month-in-year. The resulting
-        timestamp has nanosecond resolution and uses UTC as timezone.
-        """
-        return pd.Timestamp(str(self.next()), tz=timezone.utc) - pd.Timedelta(1)
+    def stop(self, tz: tzinfo = timezone.utc) -> datetime:
+        """Determine the last moment for this month-in-year."""
+        n = self.next()
+        return datetime(n.year, n.month, 1, 0, 0, 0, 0, tz) - timedelta.resolution
 
 
-class RangeOfMonths(NamedTuple):
-    start: MonthInYear
-    stop: MonthInYear
-
-    @classmethod
-    def of(cls, timeseries: pd.Series) -> RangeOfMonths:
-        return cls(
-            MonthInYear.from_timestamp(timeseries.min()),
-            MonthInYear.from_timestamp(timeseries.max()),
-        )
-
-    def as_slice(self) -> slice:
-        """
-        Convert the range-of-months into a slice with the range's starting and
-        stopping months-in-years.
-        """
-        return slice(self.start, self.stop)
-
-
-def time_range(begin: str, end: str) -> tuple[pd.Timestamp, pd.Timestamp]:
+def monthly_slice(series: pd.Series) -> slice:
     """
-    Determine the first and last moments for the given month-in-years in YYYY-MM
-    format.
+    Create a slice with the first and last months-in-year for the given time series.
     """
-    return (
-        MonthInYear.from_yyyy_mm(begin).start,
-        MonthInYear.from_yyyy_mm(end).stop,
-    )
+    return slice(MonthInYear.of(series.min()), MonthInYear.of(series.max()))
+
+
+def monthly_time_period(
+    start: str | MonthInYearly, stop: str | MonthInYearly, tz: tzinfo = timezone.utc
+) -> tuple[datetime, datetime]:
+    """
+    Determine the first and last moments of the given months-in-year. The start
+    month-in-year must either come before the stop month-in-year or be the same.
+    """
+    start_month = MonthInYear.of(start)
+    stop_month = MonthInYear.of(stop)
+    if start_month > stop_month:
+        raise ValueError(f'{start_month} comes after {stop_month}')
+    return start_month.start(tz), stop_month.stop(tz)
