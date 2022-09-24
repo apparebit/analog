@@ -12,3 +12,10 @@ class StorageError(AnalogError):
 
 class ValidationError(AnalogError):
     """An error indicating a log dataframe inconsistent with its schema."""
+
+
+class NoFreshCountsError(AnalogError):
+    """
+    An error indicating that a counting method has been called outside a
+    `with analog.fresh_counts()` block.
+    """
