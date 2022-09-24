@@ -82,23 +82,21 @@ def main(args: None | list[str] = None) -> None:
     try:
         options = to_options(sys.argv[1:] if args is None else args)
 
-        # Delay import of data manager module until after numexpr has been configured.
-        from .data_manager import latest_log_data, validate_log_data
+        # Delay import of main module until after numexpr has been configured.
+        import analog
 
-        frame = latest_log_data(**vars(options))
-        validate_log_data(frame)
+        frame = analog.latest(**vars(options))
+        analog.validate(frame)
 
         # Monthly page views: successful GET requests for markup not made by bots.
-        from .analyzer import analyze
-
         page_views = (
-            analyze(frame)
+            analog.analyze(frame)
             .only.successful()
             .only.GET()
             .only.markup()
             .only.humans()
             .monthly.requests()
-            .then_format()[1:]
+            .format()[1:]
         )
         page_views = [_MONTHS.sub(_REALIGNED, line) for line in page_views]
         konsole.info("page views by year and month", detail=page_views)
