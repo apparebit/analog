@@ -2,11 +2,14 @@
 
 A modern approach to analyzing webserver access logs!
 
-Keep on reading for a top-down description of analog's features. Or peruse [this
-hands-on
-notebook](https://github.com/apparebit/analog/blob/master/workbook.ipynb). By
-exploring four years of access logs for [my own website](https://apparebit.com),
-it helped me refine analog's interface and implementation.
+  * Keep on reading for a detailed, top-down description of analog's features.
+  * Peruse [this
+    notebook](https://github.com/apparebit/analog/blob/master/docs/workbook.ipynb)
+    for a hands-on introduction using [my website's](https://apparebit.com) logs
+    as example.
+  * Consult [this
+    grammar](https://github.com/apparebit/analog/blob/master/docs/grammar.md)
+    for the concise summary of analog's fluent interface.
 
 
 ## Overview
@@ -80,94 +83,41 @@ Analog creates three files in its data directory:
   * The combined dataframe, again in Parquet format, is named like
     `apparebit.com-2018-07-2022-07.parquet`.
 
-  * The metadata sidecar file in JSON format has the same name but with `.json`
-    file extension.
+  * The metadata sidecar file in JSON format has the same name but with a
+    `.json` file extension.
 
   * `hostnames.json` caches previous DNS lookups of IP addresses, which are by
     far the slowest part of ingesting raw access logs.
 
-When running analog from the command line or invoking the `latest_log_data()`
-function in the `analog.data_manager` module, analog first ingests raw monthly
-logs that have no corresponding enriched log files. Then, if there is no
-combined log covering all monthly log files or one of those files was just
-updated, analog creates a new combined log and its metadata sidecar file.
+When running analog from the command line or invoking `analog.latest()`, analog
+first ingests raw monthly logs that have no corresponding enriched log files.
+Then, if there is no combined log covering all monthly log files or one of those
+files was just updated, analog creates a new combined log and its metadata
+sidecar file.
 
-When running analog with the `--clean` command line option or setting the
-`clean` argument to `latest_log_data()` to `True`, analog deletes all combined
-logs and their sidecar files from the data directory. While analog does not
-delete `enriched-logs` or its contents, you can safely do so as well because, as
-just described, analog can always recreate enriched and combined log file. But
-please, do not delete the `access-logs` or `hostnames.json`!
+When using the `--clean` command line option or invoking `analog.latest()` with
+a truthy `clean` keyword argument, analog starts by deleting all monthly log
+files stored in `enriched-logs`, which causes both monthly and combined log
+files to be re-generated. You can also deleted these files manually. But
+*please*, do *not* delete `access-logs` or `hostnames.json`.
 
 
 ### Log Schema
 
-Analog combines original properties extracted from the raw access log, derived
-properties added while parsing, and enriching properties added after parsing
-based on external databases for domain names, IP locations, and user agents. The
-Python dictionary below shows [`analog.data_manager`'s
-schema](https://github.com/apparebit/analog/blob/master/analog/data_manager.py#L32)
-for log data. It makes use of [`analog.label`'s
-enumerations](https://github.com/apparebit/analog/blob/master/analog/label.py)
-`ContentType`, `HttpMethod`, `HttpProtocol`, `HttpScheme`, and `HttpStatus`.
+Analog combines properties parsed from the raw access logs, derived from the
+original data, and derived from external databases for domain names, IP
+locations, and user agents. The `SCHEMA` mapping in the
+[`analog.schema`](https://github.com/apparebit/analog/blob/master/analog/schema.py)
+module defines the Pandas schema for the resulting dataframes. It makes use of
+several enumerations defined in the
+[`analog.label`](https://github.com/apparebit/analog/blob/master/analog/label.py)
+module.
 
-```python
-{
-    # Original properties extracted from raw access log:
-    "client_address": "string",
-    "timestamp": "datetime64[ns, UTC]",
-    "method": pd.CategoricalDtype(categories=tuple(HttpMethod)),
-    "path": "string",
-    "query": "string",
-    "fragment": "string",
-    "protocol": pd.CategoricalDtype(categories=tuple(HttpProtocol), ordered=True),
-    "status": "int16",
-    "size": "int32",
-    "referrer": "string",
-    "user_agent": "string",
-    "server_name": "string",
-    "server_address": "string",
-
-    # Derived properties easily added during parsing:
-    "content_type": pd.CategoricalDtype(categories=tuple(ContentType)),
-    "cool_path": "string",
-    "referrer_scheme": pd.CategoricalDtype(categories=tuple(HttpScheme)),
-    "referrer_host": "string",
-    "referrer_path": "string",
-    "referrer_query": "string",
-    "referrer_fragment": "string",
-    "status_class": pd.CategoricalDtype(categories=tuple(HttpStatus), ordered=True),
-
-    # Enriching properties that depend on external databases:
-    # DNS
-    "client_name": "string",
-    # MaxMind's GeoLite2
-    "client_latitude": "float64",
-    "client_longitude": "float64",
-    "client_city": "string",
-    "client_country": "string",
-    # ua-parser
-    "agent_family": "string",
-    "agent_version": "string",
-    "os_family": "string",
-    "os_version": "string",
-    "device_family": "string",
-    "device_brand": "string",
-    "device_model": "string",
-    "is_bot": "bool",
-    # matomo.org's device detection
-    "bot_category": pd.CategoricalDtype(categories=tuple(BotCategory)),
-    "is_bot2": "bool",
-}
-```
-
-
-Note that analog uses *two* independent projects' user agent patterns to
-classify bots — [matomo](https://matomo.org) and
-[ua-parser](https://github.com/ua-parser). Each project identifies a good number
-of bots not identified by the other and hence both are considered by analog's
-`only.bots()` and `only.humans()` filters. The combination also helped identify
-a minor misclassification by ua-parser, which is corrected during enrichment.
+Note that analog uses *two* independent databases of user agents to detect bots
+— [matomo](https://matomo.org) and [ua-parser](https://github.com/ua-parser).
+Each project detects a good number of bots not detected by the other. Hence,
+analog's `only.bots()` and `only.humans()` filters take both into account.
+analog also fixes a minor misclassification made by ua-parser.
 
 
 ### Fluent Grammar
@@ -176,118 +126,176 @@ Analog's fluent interface makes use of computed properties as well as methods.
 Properties typically distinguish between different types of clauses whereas
 methods terminate the clauses. In the grammar below, property and method names
 are double quoted. The attribute selector's period is written as `<dot>` and
-methods are followed by `()`. A few methods have parameters written as
-`<parameter-name>`.
+methods are followed by `()`, with parameters listed in between.
 
 The following grammar summarizes the fluent interface. At the top-level, a
-**sentence** consists of phrases to specify (1) filters, (2) grouping and
-selection, and (3) display:
+***sentence*** consists of terms to specify (1) selection, (2) grouping and
+aggregation, as well as (3) display:
 
-    sentence -> filters grouping-and-selection display
+    sentence -> selection grouping-and-aggregation display
 
-There are zero or more **filters**, which generally start with the `.only`
-property but use `.over` for time ranges.
+The ***selection*** extracts rows that meet certain criteria. It distinguishes
+between three kinds of criteria, namely (1) terms that start with the `.only`
+property and filter based on attributes of the HTTP protocol, (2) terms that
+start with the `.over` property and filter based on datetime, and (3) terms that
+invoke `.select()` or `.map()` and thus serve as extension points. You can track
+the impact of these filters with the `.count_rows()` method, which appends the
+number of rows to the context's list inside a `with analog.fresh_counts()`
+block. It is an error to invoke this method outside such a block.
 
-    filters -> filter filters | range filters | 𝜀
+    selection ->
+        | <dot> "only" <dot> protocol  selection
+        | <dot> "over" <dot> datetime  selection
+        | <dot> "select" (predicate)   selection
+        | <dot> "map" (mapper)         selection
+        | <dot> "count_rows" ()        selection
+        | 𝜀
 
-    filter -> <dot> "only" <dot> filter-criterion()
+The ***protocol*** criterion contains several convenience methods that filter
+common protocol values. The `.has()` method is more general and can filter on
+the `content_type`, `method`, `protocol` and `status_class` column. Since the
+various enumeration constants defined in [the `label`
+module](https://github.com/apparebit/analog/blob/master/analog/label.py)
+uniquely identify the column, there is no need for also specifying the column
+name. In contrast, the `.equals()` method generalizes `.has()` for columns that
+do not have a categorical type and therefore requires the column name. Finally,
+the `.contains()` method implements a common operation on string-valued data.
 
-    filter-criterion ->
-        | "bots"
-        | "humans"
-        | "GET"
-        | "POST"
-        | "markup"
-        | "successful"
-        | "redirection"
-        | "client_error"
-        | "server_error"
-        | "not_found"
-        | "has" <enum-constant>
-        | "equals" <column> <value>
-        | "contains" <column> <value>
+    protocol ->
+        | "bots" ()
+        | "humans" ()
+        | "GET" ()
+        | "POST" ()
+        | "markup" ()
+        | "successful" ()
+        | "redirection" ()
+        | "client_error" ()
+        | "server_error" ()
+        | "not_found" ()
+        | "has" (enum-constant)
+        | "equals" (column>, value)
+        | "contains" (column, value)
 
-The filter criterion contains several convenience methods that abstract over
-common queries. The `has()` method is more general and can filter on the
-`content_type`, `method`, `protocol` and `status_class` column. Since the
-enumeration constant uniquely identifies the column already, it need not be
-provided. In contrast, the `equals()` method generalizes `has()` for columns
-that do not have a categorical type and hence the column name must be provided.
-Finally, the `contains()` method handles a common filter for string-valued data.
+The `.bots()` and `.humans()` methods categorize requests based on the `is_bot`
+and `is_bot2` properties. They concisely capture two different third-party
+classifications of the user agent header. Also see the [hands-on
+notebook](https://github.com/apparebit/analog/blob/master/workbook.ipynb).
 
-    range -> <dot> "over" <dot> range-criterion()
+In contrast to Pandas' expressive and complex operations on times and dates,
+analog's ***datetime*** criterion is much simpler — and more limited. It selects a
+day, month, or year ending with the end of the log or an arbitrary range
+specified by two Python datetimes or Pandas timestamps. If your analysis focuses
+on calendar months, you may find that the `monthly_slice()` and
+`monthly_range()` functions in [the `month_in_year`
+module](https://github.com/apparebit/analog/blob/master/analog/month_in_year.py)
+come in handy. Note that all datetimes and timestamps must have a valid
+timezone. It defaults to UTC in analog's own code.
 
-    range-criterion ->
-        | "last_day"
-        | "last_month"
-        | "last_year"
-        | "range" <begin> <end>
+    datetime ->
+        | "last_day" ()
+        | "last_month" ()
+        | "last_year" ()
+        | "range" (begin, end_inclusive)
 
-In contrast to Pandas' expressive and complex representations for times and
-dates, analog's **range** is quite simple: It either is one of the fixed
-relative ranges or requires two timestamps for its beginning and end. If your
-analysis focuses on calendar months, you may find that analog's `MonthInYear`
-and `MonthlyRange` make the generation of timestamps corresponding to
-start-of-month and end-of-month rather easy. To ensure that all timestamps are
-comparable, analog only handles those with timezone and generally normalizes to
-UTC.
+**About extensibility**: Analog is designed to make common log analysis
+steps simple and thereby reduce the barrier to entry when using Pandas for log
+analysis. But for implementing uncommon analysis steps, you still need to use
+Pandas. In particular, you access the wrapped Pandas dataframe or series through
+the `.data` property.
 
-**Grouping and selection** consists of a rate and statistic, just a statistic by
-itself, or an explicit bypass. Requiring explicit bypass arguably is less
-elegant than just omitting unnecessary clauses. But it also keeps the
-implementation simpler and hence won out.
+Since unwrapping a dataframe, invoking a Pandas method, and then rewrapping the
+result is a bit tedious, analog has two extension methods that apply an
+arbitrary callable on the wrapped dataframe while also wrapping the result. The
+`.select()` method takes a predicate producing a boolean series and the `.map()`
+method takes transformation producing another dataframe.
 
-    grouping-and-selection ->
-        | rate statistic
-        | statistic
-        | <dot> "as_is"
+There are three options for ***grouping and aggregation***: a rate and metric,
+just a metric by itself, or an explicit bypass of metrics with the `.just`
+property. Requiring explicit bypass arguably is less elegant than just omitting
+unnecessary clauses. But it also keeps the implementation simpler and hence won
+out.
 
-A **rate** is indicated by the `.monthly` property.
+    grouping-and-aggregation ->
+        | rate <dot> metric
+        | <dot> metric
+        | <dot> "just"
+
+A ***rate*** is indicated by the `.monthly` property. So far, I haven't seen the
+need to add more options.
 
     rate -> <dot> "monthly"
 
-Currently supported **statistics** are (1) the number of requests and (2) the
-value counts for a given column. The `status_classes` and `content_types`
-methods are convenient aliases for specific value counts.
+Currently supported ***metrics*** are (1) the number of requests, (2) the value
+counts for a given column, and (3) the unique values for a given column. The
+`.status_classes()` and `.content_types()` methods are convenient aliases for
+specific value counts. The `unique_values()` method makes little sense as a rate
+and hence is only supported without a preceding `.monthly` property.
 
-    statistic -> <dot> concrete-statistic()
+    metric ->
+        | <dot> "requests" ()
+        | <dot> "content_types" ()
+        | <dot> "status_classes" ()
+        | <dot> "value_counts" (column)
+        | <dot> "unique_values" (column)
 
-    concrete-statistic ->
-        | "requests"
-        | "content_types"
-        | "status_classes"
-        | "value_counts" <column>
-        | "unique_values" <column>
+**About result types**: The result of a selection always is another wrapped
+Pandas dataframe. However, if the grouping and aggregation is just a metric
+*without* rate, the result of `.requests()` is an integer value that terminates
+the fluent expression. Other metrics *without* rate such as `.value_counts()`
+and `.unique_values()` produce a wrapped Pandas *series*. If the grouping and
+aggregation *includes the rate*, the result of `.requests()` is a wrapped Pandas
+*series*. Other metrics *with* rate produce a wrapped Pandas dataframe.
 
-Finally, the **display** prints and/or plots the data as often as you want.
+The ***display*** formats, prints, or plots the data. The `.format()` method
+converts the wrapped series or dataframe into lines of text and thus terminates
+the fluent sentence. The other methods do not: `.count_rows()` appends the
+number of rows to the context's list inside a `with analog.fresh_counts()`
+block, whereas `.print()` and `.plot()` display the data textually and
+graphically, respectively.
 
-    display -> <dot> concrete-display() display | 𝜀
+    display ->
+        | <dot> "format" ()
+        | <dot> "count_rows" ()             display
+        | <dot> "print" (row_count = None)  display
+        | <dot> "plot" (**kwargs)           display
+        | <dot> "also" ()                   sentence
+        | 𝜀
 
-    concrete-display ->
-        | "then_print"
-        | "then_print" <row-count>
-        | "then_plot"
+Finally, if the wrapped data is a dataframe but *not* a series, the `.also()`
+method starts another sentence to analyze that dataframe.
+
 
 ### Fluent Implementation
 
 The implementation generally follows the grammar. A class implementing a clause
 typically has the same name as the corresponding nonterminal, though the name is
-CamelCased and prefixed with `_Fluent`. All classes representing nonterminals
-inherit from the same base class `_FluentTerm`, which holds the wrapped state
-and provides convenient methods for creating new subclass instances. Since some
-statistics result in series instead of dataframes, that base class and
-`_FluentDisplay` are generic.
+CamelCased and prefixed with `Fluent`. All classes representing nonterminals
+inherit from the same abstract base class `FluentTerm`, which holds the wrapped
+state and provides convenient, private methods for creating new subclass
+instances. Since, as described above, some statistics result in series instead
+of dataframes, that base class and `FluentDisplay` are generic.
 
 The main entry point for fluent analysis is:
 
     def analyze(frame: pd.DataFrame) -> FluentSentence: ...
 
-A second function recombines several (wrapped) series into a dataframe again,
-notably for plotting:
+It returns an instance of `FluentSentence`. A second function recombines several
+wrapped or unwrapped series into a dataframe again, notably for plotting:
 
-    def merge(columns: dict[str, FluentTerm[pd.Series]]) -> FluentSentence: ...
+    def merge(
+      *series: FluentTerm[pd.Series] | pd.Series,
+      **named_series: FluentTerm[pd.Series] | pd.Series,
+    ) -> FluentSentence:
 
-Et voilà! 😎
+The function returns a wrapped dataframe that combines all series given as
+arguments. For series passed with keyword arguments, it also renames the series
+to the keywords.
+
+The `count_rows()` method supported by `FluentSentence` and `FluentDisplay`
+requires a context provides with a list for those counts. You create the context
+through a `with fresh_counts() as counts` statement.
+
+Happy, happy, joy, joy! 😎
 
 ---
 
