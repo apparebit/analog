@@ -16,10 +16,10 @@ from .atomic_update import atomic_update
 from .error import StorageError
 from .month_in_year import MonthInYear
 from .parser import enrich, parse_all_lines
-from .schema import coerce, validate
+from .schema import coerce
 
 
-__all__ = ('Coverage', 'DataManager', 'latest_log_data', 'validate_log_data')
+__all__ = ('Coverage', 'DataManager', 'latest')
 
 
 class Coverage:
@@ -318,7 +318,7 @@ class DataManager:
             self._combine_and_write(self._coverage, target_path)
 
 
-def latest_log_data(
+def latest(
     root: str | Path,
     clean: bool = False,
     incremental: bool = False,
@@ -330,6 +330,3 @@ def latest_log_data(
     manager.ingest_monthly_logs()
     manager.combine_monthly_logs(incremental=incremental)
     return manager.data
-
-
-validate_log_data = validate
