@@ -1,38 +1,56 @@
 from __future__ import annotations
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Callable, Generic, Optional, TypeAlias, TypeVar, overload
+from typing import Callable, Generic, Optional, TypeAlias, TypeVar
 
 import pandas as pd
 
+from .error import NoFreshCountsError
 from .label import ContentType, HttpMethod, HttpProtocol, HttpStatus
 from .month_in_year import monthly_slice
 
 
-_DT = TypeVar('_DT', pd.Series, pd.DataFrame)
-_FrameWrapper = TypeVar('_FrameWrapper', bound='_FluentTerm[pd.DataFrame]')
-_SeriesMapper: TypeAlias = Callable[[pd.DataFrame], pd.Series]
+# --------------------------------------------------------------------------------------
+# The global state and context manager for counting
 
 
-class _FluentTerm(Generic[_DT]):
-    def __init__(self, data: _DT, filters: list[_SeriesMapper]) -> None:
-        self._data: _DT = data
-        self._filters = filters
+_counts: list[int] | None = None
+
+
+# --------------------------------------------------------------------------------------
+# The base class of all terms
+
+
+DATA = TypeVar('DATA', pd.Series, pd.DataFrame)
+SeriesMapper: TypeAlias = Callable[[pd.DataFrame], pd.Series]
+
+
+_FrameWrapper = TypeVar('_FrameWrapper', bound='FluentTerm[pd.DataFrame]')
+
+
+class FluentTerm(Generic[DATA]):
+    def __init__(
+        self, data: DATA, *, filters: list[SeriesMapper] | None = None
+    ) -> None:
+        self._data: DATA = data
+        self._filters: list[SeriesMapper] | None = filters
 
     @property
-    def data(self) -> _DT:
+    def data(self) -> DATA:
         """
         Unwrap the underlying series or dataframe. Accessing this property
         forces evaluation of any pending filters.
         """
         data = self._data
         filters = self._filters
-        if isinstance(data, pd.Series) or len(filters) == 0:
+        if isinstance(data, pd.Series) or filters is None or len(filters) == 0:
             return data
 
         # There are filters to evaluate! But first we have to appease mypy:
         assert isinstance(data, pd.DataFrame)
 
-        self._filters = []
+        self._filters = None
         if len(filters) == 1:
             self._data = data = data[filters[0](data)]
         else:
@@ -42,140 +60,180 @@ class _FluentTerm(Generic[_DT]):
             self._data = data = data[selection]
         return data
 
-    def handoff(
-        self: _FluentTerm[pd.DataFrame], wrapper: type[_FrameWrapper]
+    def _handoff(
+        self: FluentTerm[pd.DataFrame], wrapper: type[_FrameWrapper]
     ) -> _FrameWrapper:
-        return wrapper(self._data, self._filters)
+        return wrapper(self._data, filters=self._filters)
 
-    def filter(
-        self: _FluentTerm[pd.DataFrame],
+    def _filtering(
+        self: FluentTerm[pd.DataFrame],
         wrapper: type[_FrameWrapper],
-        predicate: _SeriesMapper,
+        predicate: SeriesMapper,
     ) -> _FrameWrapper:
-        # Delay filter evaluation to avoid plethora of intermediate dataframes.
-        return wrapper(self._data, [*self._filters, predicate])
+        # Delay filter evaluation to avoid intermediate dataframes.
+        # Still need to copy filter list before adding predicate.
+        filters = [] if (fs := self._filters) is None else list(fs)
+        filters.append(predicate)
+        return wrapper(self._data, filters=filters)
 
 
 # --------------------------------------------------------------------------------------
 
 
-class _FluentSentence(_FluentTerm[pd.DataFrame]):
-    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    # Filters
+class FluentSentence(FluentTerm[pd.DataFrame]):
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Select Rows
 
     @property
-    def only(self) -> _FluentFilter:
+    def only(self) -> FluentProtocolSelection:
         """Filter out requests that do not meet the criterion."""
-        return self.handoff(_FluentFilter)
+        return self._handoff(FluentProtocolSelection)
 
     @property
-    def over(self) -> _FluentRange:
+    def over(self) -> FluentRangeSelection:
         """Filter out requests that do not fall into time range."""
-        return self.handoff(_FluentRange)
+        return self._handoff(FluentRangeSelection)
 
-    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    # No Counts
+    def select(self, predicate: SeriesMapper) -> FluentSentence:
+        """Lazily apply the given predicate."""
+        return self._filtering(FluentSentence, predicate)
 
-    @property
-    def as_is(self) -> _FluentDisplay[pd.DataFrame]:
+    def map(self, mapper: Callable[[pd.DataFrame], pd.DataFrame]) -> FluentSentence:
+        """Eagerly apply the given mapping function."""
         # Force filter evaluation
-        return _FluentDisplay(self.data, [])
+        return FluentSentence(mapper(self.data))
 
-    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    # Counts
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Compute Statistics Without Rate
 
     def requests(self) -> int:
+        """Return the number of requests."""
         # Force filter evaluation
         return len(self.data)
 
-    def content_types(self) -> _FluentDisplay[pd.Series]:
+    def content_types(self) -> FluentDisplay[pd.Series]:
+        """
+        Determine the number of requests for each content type, producing a
+        series.
+        """
         return self.value_counts("content_type")
 
-    def status_classes(self) -> _FluentDisplay[pd.Series]:
+    def status_classes(self) -> FluentDisplay[pd.Series]:
+        """
+        Determine the number of requests for each status class, producing a
+        series.
+        """
         return self.value_counts("status_class")
 
-    def value_counts(self, column: str) -> _FluentDisplay[pd.Series]:
+    def value_counts(self, column: str) -> FluentDisplay[pd.Series]:
+        """
+        Determine the number of requests for each value in the given column,
+        producing a series.
+        """
         # Force filter evaluation
-        return _FluentDisplay(self.data[column].value_counts(), [])
+        return FluentDisplay(self.data[column].value_counts())
 
-    def unique_values(self, column: str) -> _FluentDisplay[pd.Series]:
+    def unique_values(self, column: str) -> FluentDisplay[pd.Series]:
+        """
+        Determine the unique values in the given column, producing a
+        series.
+        """
         # Force filter evaluation
-        return _FluentDisplay(self.data[column].drop_duplicates(), [])
+        return FluentDisplay(self.data[column].drop_duplicates())
 
-    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    # Monthly Counts
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Compute Statistics With Rate, i.e., Per Month
 
     @property
-    def monthly(self) -> _FluentRate:
-        """Compute monthly breakdown of a column."""
+    def monthly(self) -> FluentRate:
+        """Compute a monthly breakdown of the data."""
         # Force filter evaluation
-        return _FluentRate(self.data, [])
+        return FluentRate(self.data)
 
-    # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    # For observability/debugability
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Skip Statistics to Display
 
-    def quantify(
-        self, rows: list[int], columns: list[int] | None = None
-    ) -> _FluentSentence:
-        """Add size of wrapped dataframe to given counts."""
-        rows.append(len(self.data))
-        if columns is not None:
-            columns.append(len(self.data.columns))
+    @property
+    def just(self) -> FluentDisplay[pd.DataFrame]:
+        """Skip to printing or plotting the wrapped dataframe."""
+        # Force filter evaluation
+        return FluentDisplay(self.data)
+
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Capture Counts
+
+    def count_rows(self) -> FluentSentence:
+        """
+        Append the number of rows in the wrapped dataframe to the current list
+        of counts. It error to invoke this method outside a `with
+        analog.fresh_counts()` block.
+        """
+        if _counts is None:
+            raise NoFreshCountsError(
+                'count_rows() called outside `with fresh_counts()` block'
+            )
+
+        # Force filter evaluation
+        _counts.append(len(self.data))
         return self
 
 
 # --------------------------------------------------------------------------------------
 
 
-class _FluentFilter(_FluentTerm[pd.DataFrame]):
-    def bots(self) -> _FluentSentence:
+class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
+    def bots(self) -> FluentSentence:
         """
         Select requests made by bots. This method selects requests with user
         agents identified as bots by ua-parser, or matomo, or both.
         """
-        return self.filter(_FluentSentence, lambda df: df["is_bot"] | df["is_bot2"])
+        return self._filtering(FluentSentence, lambda df: df["is_bot"] | df["is_bot2"])
 
-    def humans(self) -> _FluentSentence:
+    def humans(self) -> FluentSentence:
         """
         Select requests not made by bots. This method selects requests with user
         agents not identified as bots by ua-parser nor matomo.
         """
-        return self.filter(
-            _FluentSentence, lambda df: (~df["is_bot"]) & (~df["is_bot2"])
+        return self._filtering(
+            FluentSentence, lambda df: (~df["is_bot"]) & (~df["is_bot2"])
         )
 
-    def GET(self) -> _FluentSentence:
-        return self.filter(_FluentSentence, lambda df: df["method"] == HttpMethod.GET)
-
-    def POST(self) -> _FluentSentence:
-        return self.filter(_FluentSentence, lambda df: df["method"] == HttpMethod.POST)
-
-    def markup(self) -> _FluentSentence:
-        return self.filter(
-            _FluentSentence, lambda df: df["content_type"] == ContentType.MARKUP
+    def GET(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["method"] == HttpMethod.GET
         )
 
-    def successful(self) -> _FluentSentence:
-        return self.filter(
-            _FluentSentence, lambda df: df["status_class"] == HttpStatus.SUCCESSFUL
+    def POST(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["method"] == HttpMethod.POST
         )
 
-    def redirection(self) -> _FluentSentence:
-        return self.filter(
-            _FluentSentence, lambda df: df["status_class"] == HttpStatus.REDIRECTION
+    def markup(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["content_type"] == ContentType.MARKUP
         )
 
-    def client_error(self) -> _FluentSentence:
-        return self.filter(
-            _FluentSentence, lambda df: df["status_class"] == HttpStatus.CLIENT_ERROR
+    def successful(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.SUCCESSFUL
         )
 
-    def not_found(self) -> _FluentSentence:
-        return self.filter(_FluentSentence, lambda df: df["status"] == 404)
+    def redirection(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.REDIRECTION
+        )
 
-    def server_error(self) -> _FluentSentence:
-        return self.filter(
-            _FluentSentence, lambda df: df["status_class"] == HttpStatus.SERVER_ERROR
+    def client_error(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.CLIENT_ERROR
+        )
+
+    def not_found(self) -> FluentSentence:
+        return self._filtering(FluentSentence, lambda df: df["status"] == 404)
+
+    def server_error(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["status_class"] == HttpStatus.SERVER_ERROR
         )
 
     _COLUMNS = {
@@ -187,56 +245,58 @@ class _FluentFilter(_FluentTerm[pd.DataFrame]):
 
     def has(
         self, criterion: ContentType | HttpMethod | HttpProtocol | HttpStatus
-    ) -> _FluentSentence:
+    ) -> FluentSentence:
         """
         Filter out all rows that do not match the given criterion. The column to
         filter is automatically determined based on the type of criterion. For
         that reason, this method only handles columns with categorical types.
         """
-        column = _FluentFilter._COLUMNS[type(criterion)]
-        return self.filter(_FluentSentence, lambda df: df[column] == criterion)
+        column = FluentProtocolSelection._COLUMNS[type(criterion)]
+        return self._filtering(FluentSentence, lambda df: df[column] == criterion)
 
-    def equals(self, column: str, value: object) -> _FluentSentence:
+    def equals(self, column: str, value: object) -> FluentSentence:
         """
         Filter out all rows that do not have the given value for the given
         column. This method generalizes `has()` for columns that are not
         categorical.
         """
-        return self.filter(_FluentSentence, lambda df: df[column] == value)
+        return self._filtering(FluentSentence, lambda df: df[column] == value)
 
-    def contains(self, column: str, value: str) -> _FluentSentence:
+    def contains(self, column: str, value: str) -> FluentSentence:
         """
         Filter out all rows that do not contain the given value for the given
         column.
         """
-        return self.filter(_FluentSentence, lambda df: df[column].str.contains(value))
+        return self._filtering(
+            FluentSentence, lambda df: df[column].str.contains(value)
+        )
 
 
-class _FluentRange(_FluentTerm[pd.DataFrame]):
-    def last_day(self) -> _FluentSentence:
+class FluentRangeSelection(FluentTerm[pd.DataFrame]):
+    def last_day(self) -> FluentSentence:
         latest = self._data["timestamp"].max()
         return self.range(latest - pd.DateOffset(days=1), latest)
 
-    def last_month(self) -> _FluentSentence:
+    def last_month(self) -> FluentSentence:
         latest = self._data["timestamp"].max()
         return self.range(latest - pd.DateOffset(months=1), latest)
 
-    def last_year(self) -> _FluentSentence:
+    def last_year(self) -> FluentSentence:
         latest = self._data["timestamp"].max()
         return self.range(latest - pd.DateOffset(years=1), latest)
 
     def range(
         self, start: datetime | pd.Timestamp, stop: datetime | pd.Timestamp
-    ) -> _FluentSentence:
-        return self.filter(
-            _FluentSentence, lambda df: df["timestamp"].between(start, stop)
+    ) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df["timestamp"].between(start, stop)
         )
 
 
 # --------------------------------------------------------------------------------------
 
 
-class _FluentRate(_FluentTerm[pd.DataFrame]):
+class FluentRate(FluentTerm[pd.DataFrame]):
     def _with_year_month(self) -> tuple[pd.DataFrame, pd.Series]:
         # Copy dataframe before updating it in place.
         df = self.data.copy()
@@ -245,69 +305,116 @@ class _FluentRate(_FluentTerm[pd.DataFrame]):
         df.insert(1, 'year', ts.dt.year)
         return df, ts
 
-    def requests(self) -> _FluentDisplay[pd.Series]:
+    def requests(self) -> FluentDisplay[pd.Series]:
+        """Count requests per month."""
         df, _ = self._with_year_month()
-        return _FluentDisplay(df.groupby(['year', 'month']).size(), [])
+        return FluentDisplay(df.groupby(['year', 'month']).size())
 
-    def content_types(self) -> _FluentDisplay[pd.DataFrame]:
+    def content_types(self) -> FluentDisplay[pd.DataFrame]:
+        """Determine different content types per month."""
         return self.value_counts("content_type")
 
-    def status_classes(self) -> _FluentDisplay[pd.DataFrame]:
+    def status_classes(self) -> FluentDisplay[pd.DataFrame]:
+        """Determine different status classes per month."""
         return self.value_counts("status_class")
 
-    def value_counts(self, column: str) -> _FluentDisplay[pd.DataFrame]:
+    def value_counts(self, column: str) -> FluentDisplay[pd.DataFrame]:
+        """Determine the counts of different values per month."""
         df, ts = self._with_year_month()
         df = df.groupby(['year', 'month', column]).size().unstack(fill_value=0)
-        return _FluentDisplay(df[monthly_slice(ts)], [])
+        return FluentDisplay(df[monthly_slice(ts)])
 
-    def unique_values(self, column: str) -> _FluentDisplay[pd.DataFrame]:
-        raise NotImplementedError()  # Oops!
+    # unique_values() seemingly makes little sense on a monthly basis.
 
 
 # --------------------------------------------------------------------------------------
 
 
-class _FluentDisplay(_FluentTerm[_DT]):
-    def then_format(self) -> list[str]:
+class FluentDisplay(FluentTerm[DATA]):
+    def format(self) -> list[str]:
+        """Format the data, returning the lines of text."""
         return self.data.to_string().splitlines()
 
-    def then_print(self, rows: Optional[int] = None) -> _FluentDisplay[_DT]:
+    def print(self, rows: Optional[int] = None) -> FluentDisplay[DATA]:
+        """Print the data."""
         if rows is None:
             print(self.data.to_string())
         else:
             print(self.data.head(rows))
         return self
 
-    def then_plot(self, **kwargs: object) -> _FluentDisplay[_DT]:
+    def plot(self, **kwargs: object) -> FluentDisplay[DATA]:
+        """Plot the data."""
         self.data.plot(**kwargs)
         return self
 
-    def quantify(
-        self, rows: list[int], columns: list[int] | None = None
-    ) -> _FluentDisplay[_DT]:
-        """Add size of wrapped series or dataframe to given counts."""
-        rows.append(len(self.data))
-        if columns is not None:
-            if isinstance(self.data, pd.Series):
-                columns.append(1)
-            else:
-                columns.append(len(self.data.columns))
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+    def also(self) -> FluentSentence:
+        """Start another analysis expression but on the current dataframe."""
+        data = self.data
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f'wrapped data is a {type(data)}, not a dataframe')
+        return self._handoff(FluentSentence)
+
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+    def count_rows(self) -> FluentDisplay[DATA]:
+        """
+        Append the number of rows in the wrapped dataframe or series to the
+        current list of counts. It error to invoke this method outside a `with
+        analog.fresh_counts()` block.
+        """
+        if _counts is None:
+            raise NoFreshCountsError(
+                'count_rows() called outside `with fresh_counts()` block'
+            )
+
+        # Force filter evaluation
+        _counts.append(len(self.data))
         return self
 
 
 # ======================================================================================
 
 
-def analyze(frame: pd.DataFrame) -> _FluentSentence:
+def analyze(frame: pd.DataFrame) -> FluentSentence:
     """
     Analyze the dataframe. This function returns the wrapped dataframe, ready
     for fluent processing.
     """
-    return _FluentSentence(frame, [])
+    return FluentSentence(frame)
 
 
-def merge(columns: dict[str, _FluentTerm[pd.Series]]) -> _FluentSentence:
-    """Merge the named series as columns in a new, wrapped dataframe."""
-    return _FluentSentence(
-        pd.concat([s.data.copy().rename(n) for n, s in columns.items()], axis=1), []
-    )
+def unwrapped(value: FluentTerm[DATA] | DATA) -> DATA:
+    """Return a definitely unwrapped dataframe or series."""
+    return value.data if isinstance(value, FluentTerm) else value
+
+
+def merge(
+    *series: FluentTerm[pd.Series] | pd.Series,
+    **named_series: FluentTerm[pd.Series] | pd.Series,
+) -> FluentSentence:
+    """
+    Merge the series as columns in a new, wrapped dataframe. Positional
+    arguments are unwrapped only. Keyword arguments are unwrapped and renamed
+    with the key.
+    """
+    full_series = [unwrapped(s) for s in series]
+    full_series.extend(unwrapped(s).rename(n) for n, s in named_series.items())
+    return FluentSentence(pd.concat(full_series, axis=1))
+
+
+@contextmanager
+def fresh_counts() -> Iterator[list[int]]:
+    """
+    Install a new list for capturing counts generated by fluent `.count_rows()`
+    method invocations. You access the list by binding the value of the context
+    manager in the `with` statement.
+    """
+    global _counts
+    old_counts, _counts = _counts, []
+    try:
+        yield _counts
+    finally:
+        _counts = old_counts
