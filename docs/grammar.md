@@ -1,5 +1,12 @@
 # analog's fluent grammar
 
+The following grammar describes the entirety of analog's fluent analysis API. It
+directly translates into code. For example, the first alternative of `selection`
+combined with the first alternative of `protocol` and the last alternative of
+`selection` translates into `.only.bots()`, an expression to filter out requests
+not made by bots. In translation, `<dot>` becomes a literal dot `.` and `𝜀`
+means "nothing." Parentheses are not used for grouping in the grammar; they
+specify method arguments and hence remain during translation.
 
 ```py
 sentence -> selection grouping-plus-aggregation display
