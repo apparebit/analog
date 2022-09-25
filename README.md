@@ -4,7 +4,7 @@ A modern approach to analyzing webserver access logs!
 
   * Keep on reading for a detailed, top-down description of analog's features.
   * Peruse [this
-    notebook](https://github.com/apparebit/analog/blob/master/docs/workbook.ipynb)
+    notebook](https://github.com/apparebit/analog/blob/master/docs/hands-on.ipynb)
     for a hands-on introduction using [my website's](https://apparebit.com) logs
     as example.
   * Consult [this
@@ -141,7 +141,8 @@ start with the `.over` property and filter based on datetime, and (3) terms that
 invoke `.select()` or `.map()` and thus serve as extension points. You can track
 the impact of these filters with the `.count_rows()` method, which appends the
 number of rows to the context's list inside a `with analog.fresh_counts()`
-block. It is an error to invoke this method outside such a block.
+block. It is an error to call this method outside such a block. Square brackets
+containing a slice, select rows by their numbers.
 
     selection ->
         | <dot> "only" <dot> protocol  selection
@@ -149,6 +150,7 @@ block. It is an error to invoke this method outside such a block.
         | <dot> "select" (predicate)   selection
         | <dot> "map" (mapper)         selection
         | <dot> "count_rows" ()        selection
+        | [ <slice> ]                  selection
         | 𝜀
 
 The ***protocol*** criterion contains several convenience methods that filter
@@ -247,22 +249,26 @@ aggregation *includes the rate*, the result of `.requests()` is a wrapped Pandas
 *series*. Other metrics *with* rate produce a wrapped Pandas dataframe.
 
 The ***display*** formats, prints, or plots the data. The `.format()` method
-converts the wrapped series or dataframe into lines of text and thus terminates
-the fluent sentence. The other methods do not: `.count_rows()` appends the
-number of rows to the context's list inside a `with analog.fresh_counts()`
-block, whereas `.print()` and `.plot()` display the data textually and
-graphically, respectively.
+converts the wrapped series or dataframe into lines of text. It terminates the
+fluent sentence to return the result. `.count_rows()` appends the number of rows
+to the context inside a `with analog.fresh_counts()` block, whereas square
+brackets containing a slice pick rows by their numbers. `.print()` displays the
+data as text and  `.plot()` as a graph.
 
     display ->
         | <dot> "format" ()
-        | <dot> "count_rows" ()             display
-        | <dot> "print" (row_count = None)  display
-        | <dot> "plot" (**kwargs)           display
-        | <dot> "also" ()                   sentence
+        | <dot> "count_rows" ()        display
+        | [ <slice> ]                  display
+        | <dot> "print" (rows = None)  display
+        | <dot> "plot" (**kwargs)      display
+        | <dot> "also" ()              sentence
+        | <dot> "done" ()
         | 𝜀
 
-Finally, if the wrapped data is a dataframe but *not* a series, the `.also()`
-method starts another sentence to analyze that dataframe.
+Finally, `.also()` starts another sentence, as long as the wrapped data is a
+dataframe, and `.done()` terminates the sentence. Since it returns `None`, the
+latter method suppresses the display of a series or dataframe in Jupyter
+notebooks.
 
 
 ### Fluent Implementation

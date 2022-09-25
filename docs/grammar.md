@@ -20,6 +20,8 @@ selection ->
         # Implement more general transformation
     | <dot> "count_rows" ()              selection
         # Append row count to `with analog.fresh_counts()`
+    | [ <slice> ]                        selection
+        # Select rows by their numbers
     | 𝜀
 
 protocol ->  # Filter on HTTP protocol
@@ -62,12 +64,16 @@ metric ->
 display ->
     | <dot> "format"      ()
         # Return list of strings
-    | <dot> "count_rows"  ()                  display
+    | <dot> "count_rows"  ()             display
         # Append row count to `with analog.fresh_counts()`
-    | <dot> "print"       (row_count = None)  display
-    | <dot> "plot"        (**kwargs)          display
+    | [ <slice> ]                        display
+        # Select rows by their numbers
+    | <dot> "print"       (rows = None)  display
+    | <dot> "plot"        (**kwargs)     display
         # Display data textually or graphically
-    | <dot> "also"        ()                  sentence
+    | <dot> "also"        ()             sentence
         # Start next sentence with wrapped dataframe
+    | <dot> "done"        ()
+        # End the sentence to suppresses REPL output
     | 𝜀
 ```
