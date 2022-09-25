@@ -132,7 +132,7 @@ def monthly_slice(series: pd.Series) -> slice:
     return slice(MonthInYear.of(series.min()), MonthInYear.of(series.max()))
 
 
-def monthly_time_period(
+def monthly_period(
     start: str | MonthInYearly, stop: str | MonthInYearly, tz: tzinfo = timezone.utc
 ) -> tuple[datetime, datetime]:
     """
