@@ -2,13 +2,18 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Callable, Generic, Optional, TypeAlias, TypeVar
+from typing import Callable, Generic, TypeAlias, TypeVar
 
 import pandas as pd
 
 from .error import NoFreshCountsError
 from .label import ContentType, HttpMethod, HttpProtocol, HttpStatus
 from .month_in_year import monthly_slice
+
+try:
+    from IPython.display import display  # type: ignore[import]
+except ImportError:
+    display = print
 
 
 # --------------------------------------------------------------------------------------
@@ -60,6 +65,15 @@ class FluentTerm(Generic[DATA]):
             self._data = data = data[selection]
         return data
 
+    def __str__(self) -> str:
+        data = self.data
+        return (data.to_frame() if isinstance(data, pd.Series) else data).to_string()
+
+    def _repr_html_(self) -> str | None:
+        """Support HTML output in Jupyter notebooks."""
+        data = self.data
+        return (data.to_frame() if isinstance(data, pd.Series) else data)._repr_html_()
+
     def _handoff(
         self: FluentTerm[pd.DataFrame], wrapper: type[_FrameWrapper]
     ) -> _FrameWrapper:
@@ -83,6 +97,11 @@ class FluentTerm(Generic[DATA]):
 class FluentSentence(FluentTerm[pd.DataFrame]):
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
     # Select Rows
+
+    def __getitem__(self, selection: slice) -> FluentSentence:
+        """Select rows by their numbers."""
+        # Force filter evaluation
+        return FluentSentence(self.data[selection])
 
     @property
     def only(self) -> FluentProtocolSelection:
@@ -131,7 +150,9 @@ class FluentSentence(FluentTerm[pd.DataFrame]):
         producing a series.
         """
         # Force filter evaluation
-        return FluentDisplay(self.data[column].value_counts())
+        return FluentDisplay(
+            self.data[column].value_counts().rename_axis(column).rename('count')
+        )
 
     def unique_values(self, column: str) -> FluentDisplay[pd.Series]:
         """
@@ -139,7 +160,9 @@ class FluentSentence(FluentTerm[pd.DataFrame]):
         series.
         """
         # Force filter evaluation
-        return FluentDisplay(self.data[column].drop_duplicates())
+        return FluentDisplay(
+            self.data[column].drop_duplicates().reindex().rename_axis('row_number')
+        )
 
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
     # Compute Statistics With Rate, i.e., Per Month
@@ -308,7 +331,12 @@ class FluentRate(FluentTerm[pd.DataFrame]):
     def requests(self) -> FluentDisplay[pd.Series]:
         """Count requests per month."""
         df, _ = self._with_year_month()
-        return FluentDisplay(df.groupby(['year', 'month']).size())
+        return FluentDisplay(
+            # Index is labeled multi-index thanks to groupby.
+            df.groupby(['year', 'month'])
+            .size()
+            .rename('requests')
+        )
 
     def content_types(self) -> FluentDisplay[pd.DataFrame]:
         """Determine different content types per month."""
@@ -324,23 +352,28 @@ class FluentRate(FluentTerm[pd.DataFrame]):
         df = df.groupby(['year', 'month', column]).size().unstack(fill_value=0)
         return FluentDisplay(df[monthly_slice(ts)])
 
-    # unique_values() seemingly makes little sense on a monthly basis.
+    # unique_values() make little sense on a monthly basis.
 
 
 # --------------------------------------------------------------------------------------
 
 
 class FluentDisplay(FluentTerm[DATA]):
+    def __getitem__(self, selection: slice) -> FluentDisplay[DATA]:
+        return type(self)(self.data[selection])
+
     def format(self) -> list[str]:
         """Format the data, returning the lines of text."""
         return self.data.to_string().splitlines()
 
-    def print(self, rows: Optional[int] = None) -> FluentDisplay[DATA]:
-        """Print the data."""
-        if rows is None:
-            print(self.data.to_string())
-        else:
-            print(self.data.head(rows))
+    def print(self, *, rows: int | None = None) -> FluentDisplay[DATA]:
+        """Print the data. If rows are not None, print only as many rows."""
+        data = self.data
+        if rows is not None:
+            data = data.iloc[:rows]
+
+        df = data.to_frame() if isinstance(data, pd.Series) else data
+        display(df)
         return self
 
     def plot(self, **kwargs: object) -> FluentDisplay[DATA]:
@@ -374,21 +407,31 @@ class FluentDisplay(FluentTerm[DATA]):
         _counts.append(len(self.data))
         return self
 
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Be Done
+
+    def done(self) -> None:
+        """
+        Be done. This method helps suppress printed values when using a REPL,
+        including Jupyter notebook.
+        """
+        pass
+
 
 # ======================================================================================
-
-
-def analyze(frame: pd.DataFrame) -> FluentSentence:
-    """
-    Analyze the dataframe. This function returns the wrapped dataframe, ready
-    for fluent processing.
-    """
-    return FluentSentence(frame)
 
 
 def unwrapped(value: FluentTerm[DATA] | DATA) -> DATA:
     """Return a definitely unwrapped dataframe or series."""
     return value.data if isinstance(value, FluentTerm) else value
+
+
+def analyze(data: FluentTerm[pd.DataFrame] | pd.DataFrame) -> FluentSentence:
+    """
+    Analyze the dataframe. This function returns the wrapped dataframe, ready
+    for fluent processing.
+    """
+    return FluentSentence(unwrapped(data))
 
 
 def merge(
