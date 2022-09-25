@@ -19,6 +19,7 @@
     "qname",
     "Seriesful",
     "skipna",
+    "tablefmt",
     "unescapes"
   ],
   "python.formatting.provider": "black",
