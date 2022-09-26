@@ -281,6 +281,23 @@ state and provides convenient, private methods for creating new subclass
 instances. Since, as described above, some statistics result in series instead
 of dataframes, that base class and `FluentDisplay` are generic.
 
+
+#### *Cool Features*
+
+Three features of the implementation [stand out, especially in a
+notebook](https://github.com/apparebit/analog/blob/master/docs/hands-on.ipynb):
+
+  * Wrapped series and dataframes display as HTML tables in Jupyter, when
+    invoking `.print()` and when becoming a cell's value.
+  * When the fluent grammar generates new wrapped series, it makes sure that the
+    series have meaningful index and data names.
+  * Wrapped series and dataframes support slicing by row numbers, so you can
+    throttle the amount of data displayed in a notebook or interactive shell,
+    even when relying on the notebook for doing the displaying.
+
+
+#### *Entry Points*
+
 The main entry point for fluent analysis is:
 
     def analyze(frame: pd.DataFrame) -> FluentSentence: ...
