@@ -10,10 +10,6 @@ class StorageError(AnalogError):
     """An error indicating missing data directories or files."""
 
 
-class ValidationError(AnalogError):
-    """An error indicating a log dataframe inconsistent with its schema."""
-
-
 class NoFreshCountsError(AnalogError):
     """
     An error indicating that a counting method has been called outside a
