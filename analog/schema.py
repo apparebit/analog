@@ -1,4 +1,4 @@
-from collections.abc import Mapping, Sized
+from collections.abc import Sized
 from types import MappingProxyType
 from typing import NamedTuple
 
@@ -6,9 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.core.dtypes.base import ExtensionDtype
 
-from .error import ValidationError
 from .label import (
-    BotCategory,
     ContentType,
     HttpMethod,
     HttpProtocol,
@@ -24,38 +22,39 @@ Int32Dtype = np.dtype('int32')
 StringDtype = pd.StringDtype()
 
 
-SCHEMA: Mapping[str, np.dtype | ExtensionDtype] = MappingProxyType(
+ACCESS_LOG_COLUMNS: MappingProxyType[str, np.dtype | ExtensionDtype] = MappingProxyType(
     {
-        # ------------------------------------
-        # Properties extracted from access log
-        # ------------------------------------
         "client_address": StringDtype,
         "timestamp": pd.DatetimeTZDtype('ns', 'UTC'),
-        "method": pd.CategoricalDtype(categories=tuple(HttpMethod)),
+        "method": pd.CategoricalDtype(categories=list(HttpMethod)),
         "path": StringDtype,
         "query": StringDtype,
         "fragment": StringDtype,
-        "protocol": pd.CategoricalDtype(categories=tuple(HttpProtocol), ordered=True),
+        "protocol": pd.CategoricalDtype(categories=list(HttpProtocol), ordered=True),
         "status": Int16Dtype,
         "size": Int32Dtype,
         "referrer": StringDtype,
         "user_agent": StringDtype,
         "server_name": StringDtype,
         "server_address": StringDtype,
-        # -----------------------------------------
-        # Properties easily derived from above data
-        # -----------------------------------------
-        "content_type": pd.CategoricalDtype(categories=tuple(ContentType)),
+    }
+)
+
+DERIVED_COLUMNS: MappingProxyType[str, np.dtype | ExtensionDtype] = MappingProxyType(
+    {
         "cool_path": StringDtype,
-        "referrer_scheme": pd.CategoricalDtype(categories=tuple(HttpScheme)),
+        "content_type": pd.CategoricalDtype(categories=list(ContentType)),
+        "status_class": pd.CategoricalDtype(categories=list(HttpStatus), ordered=True),
+        "referrer_scheme": pd.CategoricalDtype(categories=list(HttpScheme)),
         "referrer_host": StringDtype,
         "referrer_path": StringDtype,
         "referrer_query": StringDtype,
         "referrer_fragment": StringDtype,
-        "status_class": pd.CategoricalDtype(categories=tuple(HttpStatus), ordered=True),
-        # ------------------------------------------
-        # Properties looked up in external databases
-        # ------------------------------------------
+    }
+)
+
+ENRICHED_COLUMNS: MappingProxyType[str, np.dtype | ExtensionDtype] = MappingProxyType(
+    {
         # DB: DNS
         "client_name": StringDtype,
         # DB: GeoIP2
@@ -64,35 +63,30 @@ SCHEMA: Mapping[str, np.dtype | ExtensionDtype] = MappingProxyType(
         "client_city": StringDtype,
         "client_country": StringDtype,
         # DB: https://github.com/robd003/uap-python-up2date
-        "agent_family": StringDtype,
-        "agent_version": StringDtype,
-        "os_family": StringDtype,
-        "os_version": StringDtype,
-        "device_family": StringDtype,
-        "device_brand": StringDtype,
-        "device_model": StringDtype,
-        "is_bot": BoolDtype,
+        "is_bot1": BoolDtype,
         # DB: https://github.com/matomo-org/device-detector
-        "bot_category": pd.CategoricalDtype(categories=tuple(BotCategory)),
         "is_bot2": BoolDtype,
     }
 )
 
+SCHEMA = MappingProxyType(ACCESS_LOG_COLUMNS | DERIVED_COLUMNS | ENRICHED_COLUMNS)
 
-NON_NULL_COLUMNS = (
-    'client_address',
-    'timestamp',
-    'method',
-    'path',
-    'protocol',
-    'status',
-    'size',
-    'content_type',
-    'cool_path',
-    'status_class',
-    'is_bot',
-    'bot_category',
-    'is_bot2',
+COLUMN_NAMES = frozenset(SCHEMA.keys())
+NON_NULL_COLUMN_NAMES = frozenset(
+    (
+        'client_address',
+        'timestamp',
+        'method',
+        'path',
+        'protocol',
+        'status',
+        'size',
+        'cool_path',
+        'content_type',
+        'status_class',
+        'is_bot1',
+        'is_bot2',
+    )
 )
 
 
@@ -120,7 +114,7 @@ class NullConstraint(NamedTuple):
             values2 = df[column2].notnull()
 
             if values2.ne(values1).any():
-                raise ValidationError(
+                raise AttributeError(
                     f'{column1} and {column2} mix null and non-null values in same row'
                 )
 
@@ -128,7 +122,7 @@ class NullConstraint(NamedTuple):
             values2 = df[column2].notnull()
 
             if values2.__or__(values1).ne(values1).any():
-                raise ValidationError(
+                raise AttributeError(
                     f'{column2} has non-null values in rows that are null in {column1}'
                 )
 
@@ -158,11 +152,8 @@ NULL_CONSTRAINTS = (
 
 
 def coerce(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Coerce the given log dataframe to the log schema. This function updates the
-    dataframe in place.
-    """
-    return data.astype(SCHEMA, copy=False)  # type: ignore
+    """Coerce the given log dataframe to the log schema."""
+    return data.astype(SCHEMA)
 
 
 def validate(df: pd.DataFrame) -> None:
@@ -179,43 +170,32 @@ def validate(df: pd.DataFrame) -> None:
     # ----------------------------------------------------------------------------------
     # No extra or missing columns
 
-    actual_columns = set(df.columns)
-    expected_columns = set(SCHEMA.keys())
-
-    if actual_columns != expected_columns:
-        missing = expected_columns - actual_columns
-        if missing:
-            msg = f'dataframe is missing column{plural(missing)} {", ".join(missing)}'
-        else:
-            msg = ''
-
-        extras = actual_columns - expected_columns
-        if extras:
-            msg = f'{msg}, ' if msg else 'dataframe '
-            msg += f'has extra column{plural(extras)} {", ".join(extras)}'
-
-        raise ValidationError(msg)
+    columns = frozenset(df.columns)
+    if not columns < COLUMN_NAMES:
+        missing = columns - COLUMN_NAMES
+        raise AttributeError(
+            f'dataframe is missing column{plural(missing)} {", ".join(missing)}'
+        )
 
     # ----------------------------------------------------------------------------------
     # Columns have expected types
 
     maltyped = [
-        f"{column} with {type(df.dtypes[column])} instead of {type(dtype)}"
+        f'{column} has type {type(df.dtypes[column])} instead of {type(dtype)}'
         for column, dtype in SCHEMA.items()
         if df.dtypes[column] != dtype
     ]
 
     if maltyped:
-        msg = f'dataframe has maltyped column{plural(maltyped)} {", ".join(maltyped)}'
-        raise ValidationError(msg)
+        raise AttributeError('; '.join(maltyped))
 
     # ----------------------------------------------------------------------------------
     # Non-null columns contain no unexpected nulls
 
-    for column in NON_NULL_COLUMNS:
+    for column in NON_NULL_COLUMN_NAMES:
         nulls = df[column].isna().sum()
         if nulls != 0:
-            raise ValidationError(
+            raise AttributeError(
                 f'column "{column}" unexpectedly contains '
                 f'{nulls} null{"s" if nulls != 1 else ""}'
             )
