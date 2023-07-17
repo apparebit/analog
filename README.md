@@ -119,6 +119,13 @@ Each project detects a good number of bots not detected by the other. Hence,
 analog's `only.bots()` and `only.humans()` filters take both into account.
 analog also fixes a minor misclassification made by ua-parser.
 
+As of July 13, 2023, the latest version of the `ua-parser` package is 0.18.0. It
+was released five days before, on July 8, 2023. Since that package saw only two
+updates between 2018 and 2022, I did use a forked version, `ua-parser-up2date`.
+Its latest version is 0.16.1, which was released on December 16, 2022. Looking
+at the two packages' update histories for the last couple of years, the original
+`ua-parser` seems preferable again.
+
 
 ### Fluent Grammar
 
@@ -147,7 +154,7 @@ containing a slice, select rows by their numbers.
     selection ->
         | <dot> "only" <dot> protocol  selection
         | <dot> "over" <dot> datetime  selection
-        | <dot> "select" (predicate)   selection
+        | <dot> "filter" (predicate)   selection
         | <dot> "map" (mapper)         selection
         | <dot> "count_rows" ()        selection
         | [ <slice> ]                  selection
@@ -168,14 +175,17 @@ the `.contains()` method implements a common operation on string-valued data.
         | "humans" ()
         | "GET" ()
         | "POST" ()
+        | ...
         | "markup" ()
+        | ...
         | "successful" ()
         | "redirection" ()
         | "client_error" ()
         | "server_error" ()
+        |
         | "not_found" ()
-        | "has" (enum-constant)
-        | "equals" (column>, value)
+        | "equals" (column, value)
+        | "one_of" (column, value, value, ...)
         | "contains" (column, value)
 
 The `.bots()` and `.humans()` methods categorize requests based on the `is_bot`
@@ -184,7 +194,13 @@ classifications of the user agent header. Also see the [hands-on
 notebook](https://github.com/apparebit/analog/blob/master/workbook.ipynb).
 
 In contrast to Pandas' expressive and complex operations on times and dates,
-analog's ***datetime*** criterion is much simpler — and more limited. It selects a
+analog's ***datetime*** criterion is much simpler — and more limited. It selects
+the day, week, or year ending having the last entry in the log as its last day.
+
+either the last calendar day, month, or year  containing the last entry in the
+log
+
+
 day, month, or year ending with the end of the log or an arbitrary range
 specified by two Python datetimes or Pandas timestamps. If your analysis focuses
 on calendar months, you may find that the `monthly_slice()` and
@@ -195,7 +211,7 @@ timezone. It defaults to UTC in analog's own code.
 
     datetime ->
         | "last_day" ()
-        | "last_month" ()
+        | "last_week" ()
         | "last_year" ()
         | "range" (begin, end_inclusive)
 
