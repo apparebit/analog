@@ -36,10 +36,10 @@ _FrameWrapper = TypeVar('_FrameWrapper', bound='FluentTerm[pd.DataFrame]')
 
 class FluentTerm(Generic[DATA]):
     def __init__(
-        self, data: DATA, *, filters: list[SeriesMapper] | None = None
+        self, data: DATA, *, filters: tuple[SeriesMapper,...] | None = None
     ) -> None:
         self._data: DATA = data
-        self._filters: list[SeriesMapper] | None = filters
+        self._filters: tuple[SeriesMapper,...] | None = filters
 
     @property
     def data(self) -> DATA:
@@ -67,17 +67,16 @@ class FluentTerm(Generic[DATA]):
 
     def __str__(self) -> str:
         data = self.data
-        return (data.to_frame() if isinstance(data, pd.Series) else data).to_string()
+        if isinstance(data, pd.Series):
+            return data.to_frame().to_string()
+        return data.to_string()
 
     def _repr_html_(self) -> str | None:
         """Support HTML output in Jupyter notebooks."""
         data = self.data
-        return (data.to_frame() if isinstance(data, pd.Series) else data)._repr_html_()
-
-    def _handoff(
-        self: FluentTerm[pd.DataFrame], wrapper: type[_FrameWrapper]
-    ) -> _FrameWrapper:
-        return wrapper(self._data, filters=self._filters)
+        if isinstance(data, pd.Series):
+            return data.to_frame()._repr_html_() # type: ignore[operator]
+        return data._repr_html_() # type: ignore[operator]
 
     def _filtering(
         self: FluentTerm[pd.DataFrame],
@@ -86,9 +85,9 @@ class FluentTerm(Generic[DATA]):
     ) -> _FrameWrapper:
         # Delay filter evaluation to avoid intermediate dataframes.
         # Still need to copy filter list before adding predicate.
-        filters = [] if (fs := self._filters) is None else list(fs)
-        filters.append(predicate)
-        return wrapper(self._data, filters=filters)
+        fs = self._filters
+        fs = (predicate,) if fs is None else (*fs, predicate) # type: ignore[has-type]
+        return wrapper(self._data, filters=fs)
 
 
 # --------------------------------------------------------------------------------------
@@ -106,14 +105,14 @@ class FluentSentence(FluentTerm[pd.DataFrame]):
     @property
     def only(self) -> FluentProtocolSelection:
         """Filter out requests that do not meet the criterion."""
-        return self._handoff(FluentProtocolSelection)
+        return FluentProtocolSelection(self._data, filters=self._filters)
 
     @property
     def over(self) -> FluentRangeSelection:
         """Filter out requests that do not fall into time range."""
-        return self._handoff(FluentRangeSelection)
+        return FluentRangeSelection(self._data, filters=self._filters)
 
-    def select(self, predicate: SeriesMapper) -> FluentSentence:
+    def filter(self, predicate: SeriesMapper) -> FluentSentence:
         """Lazily apply the given predicate."""
         return self._filtering(FluentSentence, predicate)
 
@@ -188,8 +187,8 @@ class FluentSentence(FluentTerm[pd.DataFrame]):
     def count_rows(self) -> FluentSentence:
         """
         Append the number of rows in the wrapped dataframe to the current list
-        of counts. It error to invoke this method outside a `with
-        analog.fresh_counts()` block.
+        of counts. This method must be invoked from a `with analog.fresh_counts()`
+        block.
         """
         if _counts is None:
             raise NoFreshCountsError(
@@ -202,7 +201,6 @@ class FluentSentence(FluentTerm[pd.DataFrame]):
 
 
 # --------------------------------------------------------------------------------------
-
 
 class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
     def bots(self) -> FluentSentence:
@@ -221,69 +219,147 @@ class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
             FluentSentence, lambda df: (~df["is_bot"]) & (~df["is_bot2"])
         )
 
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # The HTTP Methods
+
+    def CONNECT(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['method'] == HttpMethod.CONNECT)
+
+    def DELETE(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['method'] == HttpMethod.DELETE)
+
     def GET(self) -> FluentSentence:
         return self._filtering(
-            FluentSentence, lambda df: df["method"] == HttpMethod.GET
-        )
+            FluentSentence, lambda df: df['method'] == HttpMethod.GET)
+
+    def HEAD(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['method'] == HttpMethod.HEAD)
+
+    def OPTIONS(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['method'] == HttpMethod.OPTIONS)
+
+    def PATCH(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['method'] == HttpMethod.PATCH)
 
     def POST(self) -> FluentSentence:
         return self._filtering(
-            FluentSentence, lambda df: df["method"] == HttpMethod.POST
-        )
+            FluentSentence, lambda df: df['method'] == HttpMethod.POST)
 
-    def markup(self) -> FluentSentence:
+    def PUT(self) -> FluentSentence:
         return self._filtering(
-            FluentSentence, lambda df: df["content_type"] == ContentType.MARKUP
-        )
+            FluentSentence, lambda df: df['method'] == HttpMethod.PUT)
+
+    def TRACE(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['method'] == HttpMethod.TRACE)
+
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # The Five HTTP Status Classes
+
+    def informational(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['status_class'] == HttpStatus.INFORMATIONAL)
 
     def successful(self) -> FluentSentence:
         return self._filtering(
-            FluentSentence, lambda df: df["status_class"] == HttpStatus.SUCCESSFUL
-        )
+            FluentSentence, lambda df: df['status_class'] == HttpStatus.SUCCESSFUL)
 
-    def redirection(self) -> FluentSentence:
+    def redirected(self) -> FluentSentence:
         return self._filtering(
-            FluentSentence, lambda df: df["status_class"] == HttpStatus.REDIRECTION
-        )
+            FluentSentence, lambda df: df['status_class'] == HttpStatus.REDIRECTED)
 
     def client_error(self) -> FluentSentence:
         return self._filtering(
-            FluentSentence, lambda df: df["status_class"] == HttpStatus.CLIENT_ERROR
-        )
+            FluentSentence, lambda df: df['status_class'] == HttpStatus.CLIENT_ERROR)
+
+    def server_error(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['status_class'] == HttpStatus.SERVER_ERROR)
+
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+
+    def config(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.CONFIG)
+
+    def directory(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.DIRECTORY)
+
+    def favicon(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.FAVICON)
+
+    def font(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.FONT)
+
+    def graphic(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.GRAPHIC)
+
+    def image(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.IMAGE)
+
+    def json(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.JSON)
+
+    def markup(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.MARKUP)
+
+    def php(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.PHP)
+
+    def script(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.SCRIPT)
+
+    def sitemap(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.SITEMAP)
+
+    def style(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.STYLE)
+
+    def text(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.TEXT)
+
+    def video(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.VIDEO)
+
+    def xml(self) -> FluentSentence:
+        return self._filtering(
+            FluentSentence, lambda df: df['content_type'] == ContentType.XML)
+
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # Not Found
 
     def not_found(self) -> FluentSentence:
         return self._filtering(FluentSentence, lambda df: df["status"] == 404)
 
-    def server_error(self) -> FluentSentence:
-        return self._filtering(
-            FluentSentence, lambda df: df["status_class"] == HttpStatus.SERVER_ERROR
-        )
-
-    _COLUMNS = {
-        ContentType: "content_type",
-        HttpMethod: "method",
-        HttpProtocol: "protocol",
-        HttpStatus: "status_class",
-    }
-
-    def has(
-        self, criterion: ContentType | HttpMethod | HttpProtocol | HttpStatus
-    ) -> FluentSentence:
-        """
-        Filter out all rows that do not match the given criterion. The column to
-        filter is automatically determined based on the type of criterion. For
-        that reason, this method only handles columns with categorical types.
-        """
-        column = FluentProtocolSelection._COLUMNS[type(criterion)]
-        return self._filtering(FluentSentence, lambda df: df[column] == criterion)
+    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+    # equals, is_one_of, contains
 
     def equals(self, column: str, value: object) -> FluentSentence:
-        """
-        Filter out all rows that do not have the given value for the given
-        column. This method generalizes `has()` for columns that are not
-        categorical.
-        """
         return self._filtering(FluentSentence, lambda df: df[column] == value)
+
+    def is_one_of(
+        self, column: str, value1: object, value2: object, *more_values: object
+    ) -> FluentSentence:
+        values = [value1, value2, *more_values]
+        return self._filtering(FluentSentence, lambda df: df[column].isin(values))
 
     def contains(self, column: str, value: str) -> FluentSentence:
         """
@@ -296,17 +372,18 @@ class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
 
 
 class FluentRangeSelection(FluentTerm[pd.DataFrame]):
+    def _last_period(self, period: str) -> FluentSentence:
+        period_object = self._data["timestamp"].max().to_period(period)
+        return self.range(period_object.start_time, period_object.end_time)
+
     def last_day(self) -> FluentSentence:
-        latest = self._data["timestamp"].max()
-        return self.range(latest - pd.DateOffset(days=1), latest)
+        return self._last_period('H')
 
     def last_month(self) -> FluentSentence:
-        latest = self._data["timestamp"].max()
-        return self.range(latest - pd.DateOffset(months=1), latest)
+        return self._last_period('M')
 
     def last_year(self) -> FluentSentence:
-        latest = self._data["timestamp"].max()
-        return self.range(latest - pd.DateOffset(years=1), latest)
+        return self._last_period('A')
 
     def range(
         self, start: datetime | pd.Timestamp, stop: datetime | pd.Timestamp
@@ -369,26 +446,17 @@ class FluentDisplay(FluentTerm[DATA]):
     def print(self, *, rows: int | None = None) -> FluentDisplay[DATA]:
         """Print the data. If rows are not None, print only as many rows."""
         data = self.data
+        if isinstance(data, pd.Series):
+            data = data.to_frame()  # type: ignore[assignment]
         if rows is not None:
             data = data.iloc[:rows]
-
-        df = data.to_frame() if isinstance(data, pd.Series) else data
-        display(df)
+        display(data)
         return self
 
     def plot(self, **kwargs: object) -> FluentDisplay[DATA]:
         """Plot the data."""
-        self.data.plot(**kwargs)
+        self.data.plot(**kwargs) # type: ignore
         return self
-
-    # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-
-    def also(self) -> FluentSentence:
-        """Start another analysis expression but on the current dataframe."""
-        data = self.data
-        if not isinstance(data, pd.DataFrame):
-            raise ValueError(f'wrapped data is a {type(data)}, not a dataframe')
-        return self._handoff(FluentSentence)
 
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
 
