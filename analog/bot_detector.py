@@ -1,16 +1,24 @@
-import pkgutil
-
+import os.path
 # We use a different regular expression implementation because matomo includes
 # negative lookbehind with differing lengths, which isn't supported by the
 # standard library package.
 import regex
 from ruyaml import YAML
 
+import analog
+
 
 class BotDetector:
     def __init__(self) -> None:
-        raw_data = pkgutil.get_data('analog', 'bots.yml')
+        # Instead of the deprecated pkgutil package, use the loader's deprecated
+        # get_data(), which also is optional but usually implemented.
+        loader = analog.__spec__.loader
+        assert loader is not None
+        assert len(analog.__path__) == 1
+        pkgpath = analog.__path__[0]
+        raw_data = loader.get_data(os.path.join(pkgpath, 'bots.yml'))
         assert raw_data is not None
+
         self._bots: list[dict] = YAML(typ='safe').load(raw_data.decode('utf8'))
         self._is_bot = regex.compile('|'.join(bot['regex'] for bot in self._bots))
         self._bots.insert(0, self._bots.pop())  # Move catch-all to front of list.
