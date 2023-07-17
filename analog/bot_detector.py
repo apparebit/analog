@@ -10,14 +10,24 @@ import analog
 
 class BotDetector:
     def __init__(self) -> None:
-        # Instead of the deprecated pkgutil package, use the loader's deprecated
-        # get_data(), which also is optional but usually implemented.
-        loader = analog.__spec__.loader
-        assert loader is not None
-        assert len(analog.__path__) == 1
+        # Instead of deprecated pkgutil package, use loader's deprecated get_data()
+        if (spec := analog.__spec__) is None:
+            raise ValueError('module "analog" has no spec')
+        if (loader := spec.loader) is None:
+            raise ValueError('module spec for "analog" has no loader')
+        if not hasattr(loader, 'get_data'):
+            raise ValueError('loader for "analog" does not implement get_data()')
+
+        if (paths := analog.__path__) is None:
+            raise ValueError('module "analog" does not represent a package')
+        if len(paths) != 1:
+            raise ValueError('package "analog" has more than one module search path')
+
         pkgpath = analog.__path__[0]
-        raw_data = loader.get_data(os.path.join(pkgpath, 'bots.yml'))
-        assert raw_data is not None
+        bots_yml = os.path.join(pkgpath, 'bots.yml')
+        raw_data = getattr(loader, 'get_data')(bots_yml)
+        if raw_data is None:
+            raise ValueError(f'unable to load resource "{bots_yml}"')
 
         self._bots: list[dict] = YAML(typ='safe').load(raw_data.decode('utf8'))
         self._is_bot = regex.compile('|'.join(bot['regex'] for bot in self._bots))
