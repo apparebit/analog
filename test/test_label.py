@@ -39,6 +39,6 @@ def test_content_type() -> None:
 
 def test_status() -> None:
     assert HttpStatus.of(200) == HttpStatus.SUCCESSFUL
-    assert HttpStatus.of(308) == HttpStatus.REDIRECTION
+    assert HttpStatus.of(308) == HttpStatus.REDIRECTED
     assert HttpStatus.of(418) == HttpStatus.CLIENT_ERROR
     assert HttpStatus.of(503) == HttpStatus.SERVER_ERROR

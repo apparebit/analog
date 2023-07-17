@@ -7,7 +7,14 @@ from analog.label import (
     HttpScheme,
     HttpStatus,
 )
-from analog.parser import parse_line, to_cool_path
+from analog.parser import (
+    coerce_log_record,
+    fill_log_record,
+    parse_common_log_format,
+    to_cool_path,
+)
+
+from analog.schema import ACCESS_LOG_COLUMNS, DERIVED_COLUMNS, NON_NULL_COLUMN_NAMES
 
 
 SAFARI_15_6 = (
@@ -40,14 +47,14 @@ DATA = [
         "user_agent": "bot",
         "server_name": "s.com",
         "server_address": "2.2.2.2",
-        "content_type": ContentType.MARKUP,
         "cool_path": "/",
+        "content_type": ContentType.MARKUP,
+        "status_class": HttpStatus.SUCCESSFUL,
         "referrer_scheme": None,
         "referrer_host": None,
         "referrer_path": None,
         "referrer_query": None,
         "referrer_fragment": None,
-        "status_class": HttpStatus.SUCCESSFUL,
     },
     {
         "client_address": "3.3.3.3",
@@ -63,21 +70,39 @@ DATA = [
         "user_agent": SAFARI_15_6,
         "server_name": "s.com",
         "server_address": "2.2.2.2",
-        "content_type": ContentType.MARKUP,
         "cool_path": "/blog/2022/post",
+        "content_type": ContentType.MARKUP,
+        "status_class": HttpStatus.CLIENT_ERROR,
         "referrer_scheme": HttpScheme.HTTPS,
         "referrer_host": "example.com",
         "referrer_path": "/some/path",
         "referrer_query": None,
         "referrer_fragment": None,
-        "status_class": HttpStatus.CLIENT_ERROR,
     },
 ]
 
 
+ACCESS_LOG_COLUMN_NAMES = frozenset(ACCESS_LOG_COLUMNS.keys())
+DERIVED_COLUMN_NAMES = frozenset(DERIVED_COLUMNS.keys())
+
+
 def test_parser() -> None:
     for line, data in zip(LINES, DATA):
-        assert parse_line(line) == data
+        # Parse line. Record fields must be strings or None.
+        record = parse_common_log_format(line)
+        assert set(record.keys()) == ACCESS_LOG_COLUMN_NAMES
+        for key, value in record.items():
+            type = str if key in NON_NULL_COLUMN_NAMES else str | None
+            assert isinstance(value, type)
+
+        # Coerce fields.
+        record = coerce_log_record(record)
+        assert set(record.keys()) == ACCESS_LOG_COLUMN_NAMES
+
+        # Add derived fields.
+        record = fill_log_record(record)
+        assert set(record.keys()) == ACCESS_LOG_COLUMN_NAMES | DERIVED_COLUMN_NAMES
+        assert record == data
 
 
 def test_to_cool_path() -> None:
