@@ -15,7 +15,7 @@ import pyarrow.parquet
 from .atomic_update import atomic_update
 from .error import StorageError
 from .month_in_year import MonthInYear
-from .parser import enrich, parse_all_lines
+from .parser import enrich, LineParser, parse_common_log_format, parse_all_lines
 from .schema import coerce
 
 
@@ -153,10 +153,15 @@ class DataManager:
             'named like "city-2022-07-11.mmdb"'
         )
 
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self,
+        root: Path,
+        line_parser: LineParser = parse_common_log_format,
+    ) -> None:
         # Set up this data manager's configuration state.
         self._root = root
         DataManager._check_directory_exists(root, is_root=True)
+        self._line_parser = line_parser
 
         self._access_log_path = root / "access-logs"
         DataManager._check_directory_exists(self._access_log_path, is_root=False)
@@ -214,7 +219,7 @@ class DataManager:
         a dataframe and return it.
         """
         with gzip.open(path, mode="rt", encoding="utf8") as lines:
-            log_data = parse_all_lines(lines)
+            log_data = parse_all_lines(lines, self._line_parser)
 
         enrich(log_data, self._hostname_db_path, self._location_db_path)
         return coerce(pd.DataFrame(log_data))
