@@ -65,9 +65,9 @@ class ContentType(EnumLabel):
     FAVICON = auto()
     FONT = auto()
     GRAPHIC = auto()
+    IMAGE = auto()
     JSON = auto()
     MARKUP = auto()
-    IMAGE = auto()
     PHP = auto()
     SCRIPT = auto()
     SITEMAP = auto()
@@ -121,81 +121,23 @@ _EXTENSION_2_CONTENT_TYPE = {
 class HttpStatus(EnumLabel):
     """THE HTTP status class."""
 
+    INFORMATIONAL = auto()
     SUCCESSFUL = auto()
-    REDIRECTION = auto()
+    REDIRECTED = auto()
     CLIENT_ERROR = auto()
     SERVER_ERROR = auto()
 
     @staticmethod
     def of(status: int) -> HttpStatus:
-        if 200 <= status < 300:
+        if 100 <= status < 200:
+            return HttpStatus.INFORMATIONAL
+        elif 200 <= status < 300:
             return HttpStatus.SUCCESSFUL
         elif 300 <= status < 400:
-            return HttpStatus.REDIRECTION
+            return HttpStatus.REDIRECTED
         elif 400 <= status < 500:
             return HttpStatus.CLIENT_ERROR
         elif 500 <= status < 600:
             return HttpStatus.SERVER_ERROR
 
         raise ValueError(f"Invalid HTTP status {status}")
-
-
-class BotCategory(EnumLabel):
-    """
-    The bot category. `NONE` means that the request didn't include a bot's user
-    agent. In contrast, `GENERIC` means that it did include a bot's user agent,
-    but its purpose is unknown.
-    """
-
-    BENCHMARK = auto()  # Performance
-    CONTENT = auto()  # Including validation and previews
-    GENERIC = auto()
-    MONITORING = auto()  # FIXME: Roll into content and networking
-    NONE = ""
-    NETWORKING = auto()  # Uptime, availability, performance
-    SEARCH = auto()  # Index spider
-    SECURITY = auto()
-    SOCIAL = auto()
-
-    @staticmethod
-    def of(description: dict[str, object] | None) -> BotCategory:
-        if description is None:
-            return BotCategory.NONE
-        if name := description.get('name'):
-            if category := _BOT_CATEGORY_BY_NAME.get(str(name)):
-                return category
-        if label := description.get('category'):
-            if category := _BOT_CATEGORY_BY_LABEL.get(str(label)):
-                return category
-        return BotCategory.GENERIC
-
-
-_BOT_CATEGORY_BY_NAME = {
-    "Amazon Route53 Health Check": BotCategory.NETWORKING,
-    "Castro 2": BotCategory.CONTENT,
-    "Let's Encrypt Validation": BotCategory.SECURITY,
-    "SSL Labs": BotCategory.SECURITY,
-}
-
-
-_BOT_CATEGORY_BY_LABEL = {
-    label: category
-    for category, labels in {
-        BotCategory.BENCHMARK: ["Benchmark"],
-        BotCategory.CONTENT: [
-            "Feed Fetcher",
-            "Feed Parser",
-            "Feed Reader",
-            "Read-it-later Service",
-            "Service Agent",
-            "Validator",
-        ],
-        BotCategory.MONITORING: ["Site Monitor"],
-        BotCategory.NETWORKING: ["Network Monitor"],
-        BotCategory.SEARCH: ["Crawler", "Search bot", "Search tools"],
-        BotCategory.SECURITY: ["Security Checker", "Security search bot"],
-        BotCategory.SOCIAL: ["Social Media Agent"],
-        BotCategory.GENERIC: [""],  # A bot with an empty label still is a bot.
-    }.items()
-    for label in labels
-}
