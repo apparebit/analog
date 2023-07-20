@@ -7,13 +7,13 @@ from typing import Callable, Generic, TypeAlias, TypeVar
 import pandas as pd
 
 from .error import NoFreshCountsError
-from .label import ContentType, HttpMethod, HttpProtocol, HttpStatus
+from .label import ContentType, HttpMethod, HttpStatus
 from .month_in_year import monthly_slice
 
 try:
-    from IPython.display import display  # type: ignore[import]
+    from IPython.display import display
 except ImportError:
-    display = print
+    display = print  # type: ignore[assignment]
 
 
 # --------------------------------------------------------------------------------------
@@ -450,7 +450,7 @@ class FluentDisplay(FluentTerm[DATA]):
             data = data.to_frame()  # type: ignore[assignment]
         if rows is not None:
             data = data.iloc[:rows]
-        display(data)
+        display(data)  # type: ignore[no-untyped-call]
         return self
 
     def plot(self, **kwargs: object) -> FluentDisplay[DATA]:
