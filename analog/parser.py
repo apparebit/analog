@@ -61,7 +61,10 @@ _DOUBLE_QUOTED_STRING = r"""
 """
 
 _HOST_NAME = r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.?(:\d+)?"
-_IP_ADDRESS = r"\d{1,3}(?:\.\d{1,3}){3}"
+_IP_ADDRESS = (
+    r"(?: [0-9]{1,3} (?: [.] [0-9]{1,3})* )"
+    r"|(?: [0-9a-fA-F]{1,4} (?: [:][:]? [0-9a-fA-F]{1,4})* )"
+)
 
 # Also recognizes combined log format and virtual host
 COMMON_LOG_FORMAT = re.compile(
