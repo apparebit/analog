@@ -29,6 +29,10 @@ LINES = [
     #
     '3.3.3.3 - - [14/Aug/2022:11:12:13 +0400] "POST /blog/2022/post.html HTTP/1.1"'
     f' 403 665 "https://example.com/some/path" "{SAFARI_15_6}" s.com 2.2.2.2',
+    #
+    '2a06:98c0:3600::103 - - [10/Jan/2023:14:41:04 -0600] '
+    '"GET /assets/fonts/bely-regular.woff2 HTTP/2.0" 403 1898 '
+    '"-" "-" apparebit.com 192.232.251.218',
 ]
 
 
@@ -79,6 +83,29 @@ DATA = [
         "referrer_query": None,
         "referrer_fragment": None,
     },
+    {
+        "client_address": "2a06:98c0:3600::103",
+        "timestamp": datetime(2023, 1, 10, 20, 41, 4, 0, timezone.utc),
+        "method": HttpMethod.GET,
+        "path": "/assets/fonts/bely-regular.woff2",
+        "query": None,
+        "fragment": None,
+        "protocol": HttpProtocol.HTTP_20,
+        "status": 403,
+        "size": 1898,
+        "referrer": None,
+        "user_agent": None,
+        "server_name": "apparebit.com",
+        "server_address": "192.232.251.218",
+        "cool_path": "/assets/fonts/bely-regular.woff2",
+        "content_type": ContentType.FONT,
+        "status_class": HttpStatus.CLIENT_ERROR,
+        'referrer_scheme': None,
+        'referrer_host': None,
+        'referrer_path': None,
+        'referrer_query': None,
+        "referrer_fragment": None,
+    }
 ]
 
 
