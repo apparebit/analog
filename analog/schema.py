@@ -71,7 +71,18 @@ ENRICHED_COLUMNS: MappingProxyType[str, np.dtype | ExtensionDtype] = MappingProx
 
 SCHEMA = MappingProxyType(ACCESS_LOG_COLUMNS | DERIVED_COLUMNS | ENRICHED_COLUMNS)
 
-COLUMN_NAMES = frozenset(SCHEMA.keys())
+COLUMN_NAMES = frozenset([
+    *SCHEMA.keys(),
+    # FIXME: The following entries are missing from the table schema.
+    'agent_family',
+    'agent_version',
+    'os_family',
+    'os_version',
+    'device_family',
+    'device_brand',
+    'device_model',
+])
+
 NON_NULL_COLUMN_NAMES = frozenset(
     (
         'client_address',
@@ -171,11 +182,11 @@ def validate(df: pd.DataFrame) -> None:
     # No extra or missing columns
 
     columns = frozenset(df.columns)
-    if not columns < COLUMN_NAMES:
-        missing = columns - COLUMN_NAMES
-        raise AttributeError(
-            f'dataframe is missing column{plural(missing)} {", ".join(missing)}'
-        )
+    extras = columns - COLUMN_NAMES
+    if len(extras) > 0:
+        import warnings
+        extras = (f'"{e}"' for e in extras)
+        warnings.warn(f'dataframe has extra columns {", ".join(extras)}')
 
     # ----------------------------------------------------------------------------------
     # Columns have expected types
