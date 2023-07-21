@@ -208,7 +208,7 @@ class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
         Select requests made by bots. This method selects requests with user
         agents identified as bots by ua-parser, or matomo, or both.
         """
-        return self._filtering(FluentSentence, lambda df: df["is_bot"] | df["is_bot2"])
+        return self._filtering(FluentSentence, lambda df: df["is_bot1"] | df["is_bot2"])
 
     def humans(self) -> FluentSentence:
         """
@@ -216,7 +216,7 @@ class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
         agents not identified as bots by ua-parser nor matomo.
         """
         return self._filtering(
-            FluentSentence, lambda df: (~df["is_bot"]) & (~df["is_bot2"])
+            FluentSentence, lambda df: (~df["is_bot1"]) & (~df["is_bot2"])
         )
 
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
