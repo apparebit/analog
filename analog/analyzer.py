@@ -373,8 +373,18 @@ class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
 
 class FluentRangeSelection(FluentTerm[pd.DataFrame]):
     def _last_period(self, period: str) -> FluentSentence:
-        period_object = self._data["timestamp"].max().to_period(period)
-        return self.range(period_object.start_time, period_object.end_time)
+        # Since timestamps are timezone aware but Pandas' periods aren't,
+        # calling `to_period()` with a timezone-aware timestamp results in the
+        # warning "UserWarning: Converting to Period representation will drop
+        # timezone information." Avoiding it means explicitly stripping the
+        # timezone and then restoring it again.
+
+        latest_timestamp = self._data["timestamp"].max()
+        timezone = latest_timestamp.tzinfo
+        period_object  = latest_timestamp.tz_localize(None).to_period(period)
+        start_time = period_object.start_time.tz_localize(timezone)
+        end_time = period_object.end_time.tz_localize(timezone)
+        return self.range(start_time, end_time)
 
     def last_day(self) -> FluentSentence:
         return self._last_period('H')
