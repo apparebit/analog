@@ -14,6 +14,7 @@ import pyarrow.parquet
 
 from .atomic_update import atomic_update
 from .error import StorageError
+from .ipaddr import latest_location_db_path
 from .month_in_year import MonthInYear
 from .parser import enrich, LineParser, parse_common_log_format, parse_all_lines
 from .schema import coerce
@@ -143,16 +144,6 @@ class DataManager:
             f'Data directory "{path.parent}" ' f'has no "{path.name}" subdirectory'
         )
 
-    @staticmethod
-    def _find_latest_location_db(path: Path) -> Path:
-        databases = [p for p in path.glob("city-????-??-??.mmdb") if p.is_file()]
-        if databases:
-            return max(databases)
-        raise StorageError(
-            f'"{path}" contains no IP location database '
-            'named like "city-2022-07-11.mmdb"'
-        )
-
     def __init__(
         self,
         root: Path,
@@ -171,9 +162,7 @@ class DataManager:
         self._hostname_db_path = root / "hostnames.json"
         location_database_path = root / "location-db"
         DataManager._check_directory_exists(location_database_path, is_root=False)
-        self._location_db_path = DataManager._find_latest_location_db(
-            location_database_path
-        )
+        self._location_db_path = latest_location_db_path(location_database_path)
 
         # Set up access log state.
         self._domain: Optional[str] = None
