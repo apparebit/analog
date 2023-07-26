@@ -1,0 +1,6 @@
+def display(*arguments: object) -> None:
+    ...
+
+class HTML:
+    def __init__(self, markup: str) -> None:
+        ...
