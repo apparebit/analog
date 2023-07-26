@@ -185,8 +185,8 @@ def validate(df: pd.DataFrame) -> None:
     extras = columns - COLUMN_NAMES
     if len(extras) > 0:
         import warnings
-        extras = (f'"{e}"' for e in extras)
-        warnings.warn(f'dataframe has extra columns {", ".join(extras)}')
+        formatted_extras = (f'"{e}"' for e in extras)
+        warnings.warn(f'dataframe has extra columns {", ".join(formatted_extras)}')
 
     # ----------------------------------------------------------------------------------
     # Columns have expected types
