@@ -268,14 +268,14 @@ The ***display*** formats, prints, or plots the data. The `.format()` method
 converts the wrapped series or dataframe into lines of text. It terminates the
 fluent sentence to return the result. `.count_rows()` appends the number of rows
 to the context inside a `with analog.fresh_counts()` block, whereas square
-brackets containing a slice pick rows by their numbers. `.print()` displays the
+brackets containing a slice pick rows by their numbers. `.show()` displays the
 data as text and  `.plot()` as a graph.
 
     display ->
         | <dot> "format" ()
         | <dot> "count_rows" ()        display
         | [ <slice> ]                  display
-        | <dot> "print" (rows = None)  display
+        | <dot> "show" (rows = None)   display
         | <dot> "plot" (**kwargs)      display
         | <dot> "also" ()              sentence
         | <dot> "done" ()
@@ -304,7 +304,7 @@ Three features of the implementation [stand out, especially in a
 notebook](https://github.com/apparebit/analog/blob/master/docs/hands-on.ipynb):
 
   * Wrapped series and dataframes display as HTML tables in Jupyter, when
-    invoking `.print()` and when becoming a cell's value.
+    invoking `.show()` and when becoming a cell's value.
   * When the fluent grammar generates new wrapped series, it makes sure that the
     series have meaningful index and data names.
   * Wrapped series and dataframes support slicing by row numbers, so you can
