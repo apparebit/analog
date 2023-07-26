@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Callable, Generic, TypeAlias, TypeVar
 
+import matplotlib as plt  # type: ignore[import]
 import pandas as pd
 
 from .error import NoFreshCountsError
@@ -13,7 +14,7 @@ from .month_in_year import monthly_slice
 try:
     from IPython.display import display
 except ImportError:
-    display = print  # type: ignore[assignment]
+    display = print
 
 
 # --------------------------------------------------------------------------------------
@@ -453,20 +454,20 @@ class FluentDisplay(FluentTerm[DATA]):
         """Format the data, returning the lines of text."""
         return self.data.to_string().splitlines()
 
-    def print(self, *, rows: int | None = None) -> FluentDisplay[DATA]:
-        """Print the data. If rows are not None, print only as many rows."""
+    def show(self, *, rows: int | None = None) -> FluentDisplay[DATA]:
+        """Show the data. If rows are not None, print only as many rows."""
         data = self.data
         if isinstance(data, pd.Series):
             data = data.to_frame()  # type: ignore[assignment]
         if rows is not None:
             data = data.iloc[:rows]
-        display(data)  # type: ignore[no-untyped-call]
+        display(data)
         return self
 
-    def plot(self, **kwargs: object) -> FluentDisplay[DATA]:
+    def plot(self, **kwargs: object) -> FluentPlot[DATA]:
         """Plot the data."""
-        self.data.plot(**kwargs) # type: ignore
-        return self
+        axes = self.data.plot(**kwargs) # type: ignore
+        return FluentPlot(self.data, axes)
 
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
 
@@ -494,6 +495,25 @@ class FluentDisplay(FluentTerm[DATA]):
         including Jupyter notebook.
         """
         pass
+
+
+# ======================================================================================
+
+
+class FluentPlot(FluentDisplay[DATA]):
+    """A fluent display that also holds on the previously plotted axes."""
+
+    def __init__(  # type: ignore[no-any-unimported]
+        self,
+        data: DATA,
+        axes: plt.axes.Axes,
+    ) -> None:
+        super().__init__(data)  # type: ignore[arg-type]
+        self._axes = axes
+
+    @property
+    def axes(self) -> plt.axes.Axes:  # type: ignore[no-any-unimported]
+        return self._axes
 
 
 # ======================================================================================
