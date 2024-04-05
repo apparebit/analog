@@ -9,3 +9,4 @@ __pycache__
 data
 dist
 got
+venv
