@@ -191,12 +191,20 @@ def validate(df: pd.DataFrame) -> None:
     # ----------------------------------------------------------------------------------
     # Columns have expected types
 
-    maltyped = [
-        f'{column} has type {type(df.dtypes[column])} instead of {type(dtype)}'
-        for column, dtype in SCHEMA.items()
-        if df.dtypes[column] != dtype
-    ]
+    maltyped = []
+    for column, dtype in SCHEMA.items():
+        if column == 'timestamp':
+            # Allow for arbitrary units, datetime.timezone as well as pytz.UTC
+            dtype = df.dtypes[column]
+            if not isinstance(dtype, pd. DatetimeTZDtype):
+                maltyped.append(f'{column} is not a datetime')
+            if str(dtype.tz) != 'UTC':
+                maltyped.append(f'{column} is not UTC but {dtype.tz}')
 
+        elif df.dtypes[column] != dtype :
+            maltyped.append(
+                f'{column} has type {df.dtypes[column]} instead of {dtype}'
+            )
     if maltyped:
         raise AttributeError('; '.join(maltyped))
 
