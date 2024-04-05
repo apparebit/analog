@@ -12,9 +12,11 @@ import pandas as pd
 import pyarrow
 import pyarrow.parquet
 
+from .analyzer import page_views
 from .atomic_update import atomic_update
 from .error import StorageError
 from .ipaddr import latest_location_db_path
+from .label import APPAREBIT_PAGE_PATHS
 from .month_in_year import MonthInYear
 from .parser import enrich, LineParser, parse_common_log_format, parse_all_lines
 from .schema import coerce
@@ -89,9 +91,14 @@ class Coverage:
         self._days += month_in_year.days()
         self._months += 1
 
-        requests = len(data)
-        self._monthly_requests[key] = {"requests": requests}
-        self._total_requests += requests
+        request_count = len(data)
+        paths = APPAREBIT_PAGE_PATHS if self._domain == "apparebit.com" else None
+        page_view_count = page_views(data, paths).requests()
+        self._monthly_requests[key] = {
+            "requests": request_count,
+            "page_views": page_view_count,
+        }
+        self._total_requests += request_count
 
     def summary(self) -> dict[str, object]:
         cursor = self._begin

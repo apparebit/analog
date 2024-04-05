@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Callable, Generic, TypeAlias, TypeVar
@@ -351,16 +351,20 @@ class FluentProtocolSelection(FluentTerm[pd.DataFrame]):
         return self._filtering(FluentSentence, lambda df: df["status"] == 404)
 
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-    # equals, is_one_of, contains
+    # equals, (not_)one_of, contains
 
     def equals(self, column: str, value: object) -> FluentSentence:
         return self._filtering(FluentSentence, lambda df: df[column] == value)
 
-    def is_one_of(
-        self, column: str, value1: object, value2: object, *more_values: object
+    def one_of(
+        self, column: str, *values: object
     ) -> FluentSentence:
-        values = [value1, value2, *more_values]
         return self._filtering(FluentSentence, lambda df: df[column].isin(values))
+
+    def not_one_of(
+        self, column: str, *values: object
+    ) -> FluentSentence:
+        return self._filtering(FluentSentence, lambda df: ~df[column].isin(values))
 
     def contains(self, column: str, value: str) -> FluentSentence:
         """
@@ -501,7 +505,7 @@ class FluentDisplay(FluentTerm[DATA]):
 
 
 class FluentPlot(FluentDisplay[DATA]):
-    """A fluent display that also holds on the previously plotted axes."""
+    """A fluent display that also holds onto the previously plotted axes."""
 
     def __init__(  # type: ignore[no-any-unimported]
         self,
@@ -559,3 +563,36 @@ def fresh_counts() -> Iterator[list[int]]:
         yield _counts
     finally:
         _counts = old_counts
+
+
+def page_views(
+    data: FluentTerm[pd.DataFrame] | pd.DataFrame,
+    paths: None | Sequence[str] = None
+) -> FluentSentence:
+    """
+    Select just the page views. This function returns only successful GET
+    requests for markup not made by bots. It optionally also filters for the
+    given paths only.
+    """
+    views = (
+        analyze(data)
+        .only.successful()
+        .only.GET()
+        .only.markup()
+        .only.humans()
+    )
+
+    if paths is not None:
+        views = views.only.one_of('cool_path', *paths)
+
+    return views
+
+
+def summarize(
+    data: FluentTerm[pd.DataFrame] | pd.DataFrame,
+    paths: None | Sequence[str] = None,
+) -> pd.DataFrame:
+    return pd.concat([
+        analyze(data).monthly.requests().data,
+        page_views(data, paths).monthly.requests().data.rename('page_views')
+    ], axis=1)
