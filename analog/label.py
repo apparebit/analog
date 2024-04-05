@@ -118,6 +118,37 @@ _EXTENSION_2_CONTENT_TYPE = {
 # fmt: on
 
 
+APPAREBIT_PAGE_PATHS = [
+    '/',
+    '/about/apparebit',
+    '/about/privacy',
+    '/about/robert-grimm',
+    '/about/robert-grimm/with-halo',
+    '/blog',
+    '/blog/2024/netanyahu-plays-goebbels',
+    '/blog/2023/great-men',
+    '/features/esteban',
+    '/blog/2022/new-map-layers',
+    '/blog/2022/your-own-kind-of-map',
+    '/blog/2022/mapping-package-management',
+    '/blog/2022/wrong-impression',
+    '/blog/2022/zuckerberg-lies',
+    '/blog/2021/lets-try-again',
+    '/blog/2021/game-of-thrones',
+    '/blog/2019/i-feel-love',
+    '/blog/2019/a-frivolous-perspective',
+    '/features/breath',
+    '/blog/2018/the-donald-is-in-love',
+    '/features/do-you-be',
+    '/blog/2018/utopia-where-we-find-it',
+    '/blog/2018/we-were-grey',
+    '/features/ubu-trump',
+    '/blog/2016/hopelessness',
+    '/features/candy-or-bust',
+    '/features/candy-or-bust/voyeur',
+]
+
+
 class HttpStatus(EnumLabel):
     """THE HTTP status class."""
 
