@@ -42,6 +42,11 @@ dependencies = [
     "pyarrow >= 1.0.1",  # Parquet
     "matplotlib >= 3.3.2",  # Graphs
     "tabulate",  # Tables
+
+    # Notebook
+    # --------
+
+    "ipykernel",
 ]
 
 dynamic = ["version"]
@@ -52,7 +57,6 @@ dev = [
     "flit",
     "mypy",
     "pytest",
-    "atheris",  # For fuzzing
 ]
 
 [project.scripts]
@@ -94,6 +98,5 @@ target-version = ['py311']
 skip-string-normalization = true
 include = '\.pyi?$'
 
-[pytest]
-capture=false
+[tool.pytest.ini_options]
 testpaths=["test"]
