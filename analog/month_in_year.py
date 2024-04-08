@@ -158,21 +158,40 @@ class MonthInYear(NamedTuple):
 
     def start_of_period(
         self,
-        months: Literal[2, 3, 4, 6] = 3,
+        period: Literal[3, 12] = 3,
         *,
         next: bool = False
     ) -> MonthInYear:
         """
-        Determine the first month of the period containing this month-in-year
-        (if `next` is `False`) or the period after the one containing this
-        month-in-year (if `next` is `True`).
+        This method returns the first month of a period with the given length.
+        For periods smaller than a year, that is the period that includes this
+        month-in-year if `not next` or the period that follows the period with
+        this month-in-year if `next`. Assuming `not next` and `period == 12`,
+        the result is this month-in-year's January if the month is December and
+        the pervious year otherwise.  Assuming `next` and `period == 12`, the
+        result is this month-in-year if the month is January and next year's
+        January otherwise.
+
+        This method is used to adjust ranges between two month-in-years
+        (inclusive). The intuition is that the minimum is enlarged to the next
+        period and the maximum is reduced to the current period, with years also
+        fully present in the range.
         """
-        overage = (self.month - 1) % months
+        if period == 12:
+            # Years
+            if next:
+                year = self.year if self.month == 1 else self.year + 1
+            else:
+                year = self.year if self.month == 12 else self.year - 1
+            return type(self)(year, 1)
+
+        # Partial years
+        overage = (self.month - 1) % period
         if overage == 0:
             return self
 
         year = self.year
-        month = self.month - overage + next * months
+        month = self.month - overage + next * period
         if month > 12:
             year += 1
             month -= 12
@@ -202,35 +221,3 @@ def monthly_period(
     if start_month > stop_month:
         raise ValueError(f'{start_month} comes after {stop_month}')
     return start_month.start(tz), stop_month.stop(tz)
-
-
-def quarterly_ticks(
-    start: MonthInYear,
-    stop: MonthInYear
-) -> tuple[list[int], list[int]]:
-    qstart = start.start_of_period(3, next=True)
-    qstop = stop.start_of_period(3)
-
-    labels = []
-    cursor = qstart
-    while cursor <= qstop:
-        labels.append(month_abbr[cursor.month])
-        cursor += 3
-
-    # Add 1 to stop, so that the final quarter gets a position, too
-    positions = [*range(qstart - start, qstop - start + 1, 3)]
-    return positions, labels
-
-
-def yearly_ticks(start: MonthInYear, stop: MonthInYear) -> tuple[list[int], list[int]]:
-    ystart = MonthInYear(start.year if start.month == 1 else start.year + 1, 1)
-    ystop = MonthInYear(stop.year if stop.month == 12 else stop.year - 1, 1)
-
-    labels = []
-    cursor = ystart
-    while cursor <= ystop:
-        labels.append(cursor.year)
-        cursor += 12
-
-    positions = [p + 0.5 for p in range(ystart - start + 4, ystop - start + 5, 12)]
-    return positions, labels
