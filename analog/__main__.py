@@ -50,7 +50,7 @@ def create_parser() -> argparse.ArgumentParser:
         "-v",
         "--verbose",
         action="count",
-        default=1,
+        default=0,
         dest="volume",
         help="increase verbosity",
     )
@@ -67,10 +67,6 @@ def to_options(args: list[str]) -> argparse.Namespace:
     konsole.info("Running with configuration", detail=vars(options))
 
     return options
-
-
-_MONTHS = re.compile(r'^(\d{4}[ ][ ]|[ ]{6})(\d\d?)((?<=[ ]\d)[ ])')
-_REALIGNED = r'\1\3\2'
 
 
 def main(args: None | list[str] = None) -> None:
@@ -90,14 +86,6 @@ def main(args: None | list[str] = None) -> None:
         summary = analog.summarize(frame)
         ax = analog.plot_requests_and_page_views(summary)
         ax.figure.savefig(f"views-{summary.start}-{summary.stop}.svg", format="svg")
-
-        # Monthly page views: successful GET requests for markup not made by bots.
-        # views = analog.page_views(frame, APPAREBIT_PAGE_PATHS)
-        # konsole.info("%d page views", views.requests())
-
-        # monthly_views = views.monthly.requests().format()[1:]
-        # monthly_views = [_MONTHS.sub(_REALIGNED, line) for line in monthly_views]
-        # konsole.info("page views by year and month", detail=monthly_views)
 
     except KeyboardInterrupt:
         konsole.warning("analog detected keyboard interrupt, exiting...")
