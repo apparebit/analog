@@ -50,7 +50,7 @@ def create_parser() -> argparse.ArgumentParser:
         "-v",
         "--verbose",
         action="count",
-        default=-1,
+        default=1,
         dest="volume",
         help="increase verbosity",
     )
@@ -87,19 +87,17 @@ def main(args: None | list[str] = None) -> None:
 
         frame = analog.latest(**vars(options))
         analog.validate(frame)
+        summary = analog.summarize(frame)
+        ax = analog.plot_requests_and_page_views(summary)
+        ax.figure.savefig(f"views-{summary.start}-{summary.stop}.svg", format="svg")
 
         # Monthly page views: successful GET requests for markup not made by bots.
-        page_views = (
-            analog.analyze(frame)
-            .only.successful()
-            .only.GET()
-            .only.markup()
-            .only.humans()
-            .monthly.requests()
-            .format()[1:]
-        )
-        page_views = [_MONTHS.sub(_REALIGNED, line) for line in page_views]
-        konsole.info("page views by year and month", detail=page_views)
+        # views = analog.page_views(frame, APPAREBIT_PAGE_PATHS)
+        # konsole.info("%d page views", views.requests())
+
+        # monthly_views = views.monthly.requests().format()[1:]
+        # monthly_views = [_MONTHS.sub(_REALIGNED, line) for line in monthly_views]
+        # konsole.info("page views by year and month", detail=monthly_views)
 
     except KeyboardInterrupt:
         konsole.warning("analog detected keyboard interrupt, exiting...")
