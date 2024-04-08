@@ -2,14 +2,14 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Callable, Generic, TypeAlias, TypeVar
+from typing import Callable, Generic, NamedTuple, TypeAlias, TypeVar
 
 import matplotlib as plt  # type: ignore[import]
 import pandas as pd
 
 from .error import NoFreshCountsError
 from .label import ContentType, HttpMethod, HttpStatus
-from .month_in_year import monthly_slice
+from .month_in_year import MonthInYear, monthly_slice
 
 try:
     from IPython.display import display
@@ -588,11 +588,19 @@ def page_views(
     return views
 
 
+class Summary(NamedTuple):
+    data: pd.DataFrame
+    start: MonthInYear
+    stop: MonthInYear
+
+
 def summarize(
-    data: FluentTerm[pd.DataFrame] | pd.DataFrame,
+    full_data: FluentTerm[pd.DataFrame] | pd.DataFrame,
     paths: None | Sequence[str] = None,
-) -> pd.DataFrame:
-    return pd.concat([
-        analyze(data).monthly.requests().data,
-        page_views(data, paths).monthly.requests().data.rename('page_views')
+) -> Summary:
+    data = pd.concat([
+        analyze(full_data).monthly.requests().data,
+        page_views(full_data, paths).monthly.requests().data.rename('page_views')
     ], axis=1)
+
+    return Summary(data, MonthInYear(*data.index[0]), MonthInYear(*data.index[-1]))
