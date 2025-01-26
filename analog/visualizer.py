@@ -1,13 +1,31 @@
 import calendar
 
 import matplotlib as mp
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 from .analyzer import Summary
 
 
-def plot_requests_and_page_views(summary: Summary) -> object:
-    # Plot the two curves
-    ax = summary.data.plot()
+def plot_monthly_summary(summary: Summary) -> object:
+    fig, ax = plt.subplots(figsize=[9, 6])
+
+    data = summary.data
+    xs = [n for n in range(1, len(data) + 1)]
+    bottom = data["zeros"]
+    width = 0.8
+    ax.bar(x=xs, height=data["all_requests"], bottom=bottom, width=width, color="#9e9e9e")
+    ax.bar(x=xs, height=data["successful"], bottom=bottom, width=width, color="#90bf61")
+    ax.bar(x=xs, height=data["page_views"], bottom=bottom, width=width, color="#417301")
+
+    bottom += data["successful"]
+    ax.bar(x=xs, height=data["redirected"], bottom=bottom, width=width, color="#fdc445")
+
+    bottom += data["redirected"]
+    ax.bar(x=xs, height=data["client_errors"], bottom=bottom, width=width, color="#f78a84")
+
+    bottom += data["client_errors"]
+    ax.bar(x=xs, height=data["server_errors"], bottom=bottom, width=width, color="#b1272e")
 
     # Add thousands separators to the y-axis
     ax.get_yaxis().set_major_formatter(
@@ -63,5 +81,14 @@ def plot_requests_and_page_views(summary: Summary) -> object:
     sec.tick_params(axis="x", length=0, labelsize="small")
     sec.set_xticks(positions, labels=labels)
     sec.spines["bottom"].set_linewidth(0)
+
+    handles = [mpatches.Patch(color=c) for c in [
+        "#9e9e9e", "#b1272e", "#f78a84", "#fdc445", "#90bf61", "#417301"
+    ]]
+    labels = [
+        "Bots", "Server Errors", "Client Errors", "Redirects", "Successful Requests", "Page Views"
+    ]
+    ax.legend(handles, labels)
+    ax.set_title("HTTP Traffic for apparebit.com")
 
     return ax
