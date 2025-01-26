@@ -74,7 +74,7 @@ def plot_monthly_summary(summary: Summary) -> object:
     cursor = year_start
     while cursor <= year_stop:
         positions.append(cursor - summary.start + 6)
-        labels.append(f"└──\u2009{cursor.year}\u2009──┘")
+        labels.append(f"└────\u200a{cursor.year}\u200a────┘")
         cursor += 12
 
     sec = ax.secondary_xaxis(location=-0.1)
