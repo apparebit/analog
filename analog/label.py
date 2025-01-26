@@ -118,7 +118,7 @@ _EXTENSION_2_CONTENT_TYPE = {
 # fmt: on
 
 
-APPAREBIT_PAGE_PATHS = [
+APPAREBIT_COOL_PATHS = frozenset([
     '/',
     '/about/apparebit',
     '/about/privacy',
@@ -146,7 +146,7 @@ APPAREBIT_PAGE_PATHS = [
     '/blog/2016/hopelessness',
     '/features/candy-or-bust',
     '/features/candy-or-bust/voyeur',
-]
+])
 
 
 class HttpStatus(EnumLabel):

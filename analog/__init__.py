@@ -7,16 +7,16 @@ __all__ = (
     'merge',
     'MonthInYear',
     'monthly_period',
-    'page_views',
-    'plot_requests_and_page_views',
+    'select_page_views',
+    'plot_monthly_summary',
     'summarize',
     'validate',
 )
 
 __version__ = "0.1.0"
 
-from .analyzer import analyze, fresh_counts, merge, page_views, summarize
+from .analyzer import analyze, fresh_counts, merge, select_page_views, summarize
 from .data_manager import latest
 from .month_in_year import MonthInYear, monthly_period
 from .schema import coerce, validate
-from .visualizer import plot_requests_and_page_views
+from .visualizer import plot_monthly_summary

@@ -55,6 +55,12 @@ def create_parser() -> argparse.ArgumentParser:
         help="increase verbosity",
     )
 
+    parser.add_argument(
+        "--list-bots",
+        action="store_true",
+        help="list all bot names",
+    )
+
     return parser
 
 
@@ -65,7 +71,6 @@ def to_options(args: list[str]) -> argparse.Namespace:
 
     konsole.config(use_color=options.use_color, volume=options.volume)
     konsole.info("Running with configuration", detail=vars(options))
-
     return options
 
 
@@ -83,8 +88,15 @@ def main(args: None | list[str] = None) -> None:
 
         frame = analog.latest(**vars(options))
         analog.validate(frame)
+
+        if options.list_bots:
+            list = frame[frame['is_bot1'] | frame['is_bot2']]['user_agent'].unique()
+            list = sorted(list)
+            for name in list:
+                print(name)
+
         summary = analog.summarize(frame)
-        ax = analog.plot_requests_and_page_views(summary)
+        ax = analog.plot_monthly_summary(summary)
         ax.figure.savefig(f"views-{summary.start}-{summary.stop}.svg", format="svg")
 
     except KeyboardInterrupt:
