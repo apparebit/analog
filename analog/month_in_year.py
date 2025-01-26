@@ -1,7 +1,9 @@
 from __future__ import annotations
-from calendar import month_abbr, monthrange
+from calendar import monthrange
 from datetime import datetime, timedelta, timezone, tzinfo
-from typing import Literal, NamedTuple, overload, Protocol, runtime_checkable, TYPE_CHECKING
+from typing import (
+    Literal, NamedTuple, overload, Protocol, runtime_checkable, Self, TYPE_CHECKING
+)
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -66,7 +68,7 @@ class MonthInYear(NamedTuple):
         """
 
         if isinstance(value, MonthInYearly):
-            return cls(value.year, value.month)
+            return cls(value.year, value.month).validate()
 
         assert isinstance(value, str), f'value "{value}" of type {type(value)}'
 
@@ -80,11 +82,17 @@ class MonthInYear(NamedTuple):
         if len(value) == 7:
             # yyyy-mm format
             try:
-                return cls(int(value[:4]), int(value[-2:]))
+                return cls(int(value[:4]), int(value[-2:])).validate()
             except:
                 raise ValueError(f'malformed yyyy-mm string "{value}"')
 
         raise ValueError(f'invalid month-in-year string "{value}"')
+
+    def validate(self) -> Self:
+        """Validate this month in year."""
+        assert 2000 <= self.year <= 2100
+        assert 1 <= self.month <= 12
+        return self
 
     def days(self) -> int:
         """Get number of days for this month in year."""
