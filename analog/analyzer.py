@@ -398,7 +398,7 @@ class FluentRangeSelection(FluentTerm[pd.DataFrame]):
         return self._last_period('M')
 
     def last_year(self) -> FluentSentence:
-        return self._last_period('A')
+        return self._last_period('Y')
 
     def range(
         self, start: datetime | pd.Timestamp, stop: datetime | pd.Timestamp
@@ -420,14 +420,14 @@ class FluentRate(FluentTerm[pd.DataFrame]):
         df.insert(1, 'year', ts.dt.year)
         return df, ts
 
-    def requests(self) -> FluentDisplay[pd.Series]:
-        """Count requests per month."""
+    def requests(self, name: str = 'requests') -> FluentDisplay[pd.Series]:
+        """Count requests per month in a series with the given name."""
         df, _ = self._with_year_month()
         return FluentDisplay(
             # Index is labeled multi-index thanks to groupby.
             df.groupby(['year', 'month'])
             .size()
-            .rename('requests')
+            .rename(name)
         )
 
     def content_types(self) -> FluentDisplay[pd.DataFrame]:
@@ -437,6 +437,15 @@ class FluentRate(FluentTerm[pd.DataFrame]):
     def status_classes(self) -> FluentDisplay[pd.DataFrame]:
         """Determine different status classes per month."""
         return self.value_counts("status_class")
+
+    def visitors(self) -> FluentDisplay[pd.Series]:
+        """Determine unique monthly visitors using IP address as proxy."""
+        df, _ = self._with_year_month()
+        return FluentDisplay(
+            df.groupby(['year', 'month', 'client_address']).size()
+            .groupby(['year', 'month']).size()
+            .rename('visitors')
+        )
 
     def value_counts(self, column: str) -> FluentDisplay[pd.DataFrame]:
         """Determine the counts of different values per month."""
@@ -465,7 +474,7 @@ class FluentDisplay(FluentTerm[DATA]):
             data = data.to_frame()  # type: ignore[assignment]
         if rows is not None:
             data = data.iloc[:rows]
-        display(data)
+        display(data.style.format(thousands=","))
         return self
 
     def plot(self, **kwargs: object) -> FluentPlot[DATA]:
@@ -523,17 +532,17 @@ class FluentPlot(FluentDisplay[DATA]):
 # ======================================================================================
 
 
-def unwrapped(value: FluentTerm[DATA] | DATA) -> DATA:
-    """Return a definitely unwrapped dataframe or series."""
+def unwrap(value: FluentTerm[DATA] | DATA) -> DATA:
+    """Ensure the value is an unwrapped data frame or series."""
     return value.data if isinstance(value, FluentTerm) else value
 
 
 def analyze(data: FluentTerm[pd.DataFrame] | pd.DataFrame) -> FluentSentence:
     """
-    Analyze the dataframe. This function returns the wrapped dataframe, ready
-    for fluent processing.
+    Analyze the dataframe. This function ensures that the value is a wrapped
+    data frame, ready for fluent processing.
     """
-    return FluentSentence(unwrapped(data))
+    return FluentSentence(unwrap(data))
 
 
 def merge(
@@ -545,8 +554,8 @@ def merge(
     arguments are unwrapped only. Keyword arguments are unwrapped and renamed
     with the key.
     """
-    full_series = [unwrapped(s) for s in series]
-    full_series.extend(unwrapped(s).rename(n) for n, s in named_series.items())
+    full_series = [unwrap(s) for s in series]
+    full_series.extend(unwrap(s).rename(n) for n, s in named_series.items())
     return FluentSentence(pd.concat(full_series, axis=1))
 
 
@@ -565,7 +574,7 @@ def fresh_counts() -> Iterator[list[int]]:
         _counts = old_counts
 
 
-def page_views(
+def select_page_views(
     data: FluentTerm[pd.DataFrame] | pd.DataFrame,
     paths: None | Sequence[str] = None
 ) -> FluentSentence:
@@ -589,18 +598,65 @@ def page_views(
 
 
 class Summary(NamedTuple):
+    """A data frame summarizing the log data."""
     data: pd.DataFrame
     start: MonthInYear
     stop: MonthInYear
 
 
 def summarize(
-    full_data: FluentTerm[pd.DataFrame] | pd.DataFrame,
+    data: FluentTerm[pd.DataFrame] | pd.DataFrame,
     paths: None | Sequence[str] = None,
 ) -> Summary:
-    data = pd.concat([
-        analyze(full_data).monthly.requests().data,
-        page_views(full_data, paths).monthly.requests().data.rename('page_views')
-    ], axis=1)
+    """
+    Summarize the log data. The resulting data frame breaks down the request
+    counts into the following columns:
 
-    return Summary(data, MonthInYear(*data.index[0]), MonthInYear(*data.index[-1]))
+      - all_requests
+        - bots
+        - humans
+          - informational
+          - client_errors
+          - server_errors
+          - redirected
+          - successful
+            - page_views
+      - zeros (i.e., all zeros)
+
+    The sum of the bots
+    """
+    data = analyze(data)
+    humans = data.only.humans()
+    page_views = humans.only.successful().only.GET().only.markup()
+
+    summary = merge(
+        data.monthly.requests("all_requests"),
+        data.only.bots().monthly.requests("bots"),
+        humans.monthly.requests("humans"),
+        humans.only.informational().monthly.requests("informational"),
+        humans.only.client_error().monthly.requests("client_errors"),
+        humans.only.server_error().monthly.requests("server_errors"),
+        humans.only.redirected().monthly.requests("redirected"),
+        humans.only.successful().monthly.requests("successful"),
+        page_views.monthly.requests("page_views"),
+        page_views.monthly.visitors(),
+    ).data.fillna(0).astype(int)
+
+    # Create zero-valued column with correct index
+    summary["zeros"] = 0
+
+    # Validate data
+    assert summary["informational"].equals(summary["zeros"])
+    assert summary["all_requests"].equals(summary[["bots", "humans"]].sum(axis=1).astype(int))
+    assert summary["all_requests"].equals(
+        summary[
+            ["bots", "informational", "client_errors", "server_errors", "redirected", "successful"]
+        ].sum(axis=1).astype(int)
+    )
+
+    # Package data
+    return Summary(
+        summary,
+        MonthInYear(*summary.index[0]).validate(),
+        MonthInYear(*summary.index[-1]).validate(),
+    )
