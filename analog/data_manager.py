@@ -5,6 +5,7 @@ import json
 from operator import itemgetter
 from pathlib import Path
 import shutil
+import sys
 from typing import Optional
 
 import konsole
@@ -12,13 +13,13 @@ import pandas as pd
 import pyarrow
 import pyarrow.parquet
 
-from .analyzer import page_views
+from .analyzer import select_page_views, summarize
 from .atomic_update import atomic_update
 from .error import StorageError
 from .ipaddr import latest_location_db_path
-from .label import APPAREBIT_PAGE_PATHS
 from .month_in_year import MonthInYear
 from .parser import enrich, LineParser, parse_common_log_format, parse_all_lines
+from .progress import progress
 from .schema import coerce
 
 
@@ -82,7 +83,7 @@ class Coverage:
     def ingested_logs(self) -> Iterator[tuple[MonthInYear, Path]]:
         return iter(self._ingested_logs)
 
-    def register_log_data(self, month_in_year: MonthInYear, data: pd.DataFrame) -> None:
+    def register_month(self, month_in_year: MonthInYear, data: pd.DataFrame) -> None:
         key = str(month_in_year)
 
         assert self._begin <= month_in_year <= self._end
@@ -92,15 +93,42 @@ class Coverage:
         self._months += 1
 
         request_count = len(data)
-        paths = APPAREBIT_PAGE_PATHS if self._domain == "apparebit.com" else None
-        page_view_count = page_views(data, paths).requests()
+        page_view_data = select_page_views(data)
+        page_view_count = page_view_data.requests()
         self._monthly_requests[key] = {
-            "requests": request_count,
+            "all_requests": request_count,
             "page_views": page_view_count,
         }
         self._total_requests += request_count
 
-    def summary(self) -> dict[str, object]:
+    def register_all(self, data: pd.DataFrame) -> None:
+        monthly_requests = {}
+        days = 0
+        months = 0
+        total_requests = 0
+
+        for row in (
+            summarize(data).data.drop(columns=["informational", "zeros"]).itertuples()
+        ):
+            rowdy = row._asdict()
+            month_in_year = MonthInYear(*rowdy["Index"])
+            key = str(month_in_year)
+
+            assert self._begin <= month_in_year <= self._end
+            assert key in self._monthly_requests
+
+            del rowdy["Index"]
+            monthly_requests[key] = rowdy
+            days += month_in_year.days()
+            months += 1
+            total_requests += rowdy["all_requests"]
+
+        self._monthly_requests = monthly_requests
+        self._days = days
+        self._months = months
+        assert self._total_requests == total_requests
+
+    def summary(self, data: None | pd.DataFrame = None) -> dict[str, object]:
         cursor = self._begin
         days = cursor.days()
         months = 1
@@ -132,7 +160,7 @@ class Coverage:
     def save(self) -> None:
         coverage = self._monthly_requests | {"summary": self.summary()}
         with atomic_update(self.path_with_suffix(".json")) as file:
-            json.dump(coverage, file, indent=4, sort_keys=True)
+            json.dump(coverage, file, indent=4)
 
 
 # --------------------------------------------------------------------------------------
@@ -155,6 +183,7 @@ class DataManager:
         self,
         root: Path,
         line_parser: LineParser = parse_common_log_format,
+        with_progress: bool = False,
     ) -> None:
         # Set up this data manager's configuration state.
         self._root = root
@@ -178,6 +207,8 @@ class DataManager:
         self._log_data_path: Optional[Path] = None
         self._log_data: Optional[pd.DataFrame] = None
         self._coverage: Optional[Coverage] = None
+
+        self._with_progress = with_progress
 
     @property
     def data(self) -> pd.DataFrame:
@@ -215,9 +246,57 @@ class DataManager:
         a dataframe and return it.
         """
         with gzip.open(path, mode="rt", encoding="utf8") as lines:
-            log_data = parse_all_lines(lines, self._line_parser)
+            log_lines = [line for line in lines]
 
-        enrich(log_data, self._hostname_db_path, self._location_db_path)
+        # Prepare for tracking progress
+        if self._with_progress:
+            # Parse each line and enrich in three ways => 4x visits per record
+            total_ticks = 4 * len(log_lines)
+            ticks = 0
+            percent = 0
+
+            def ticker() -> None:
+                nonlocal ticks, percent
+                ticks += 1
+                p = ticks / total_ticks * 100
+                if 100 <= p or percent + 0.1 <= p:
+                    percent = p
+
+                    if percent < 25:
+                        label = "(parsing log lines)"
+                    elif percent < 50:
+                        label = "(resolving host names)"
+                    elif percent < 75:
+                        label = "(resolving locations)"
+                    elif percent < 100:
+                        label = "(identifying bots)"
+                    else:
+                        label = ""
+
+                    progress(p, label)
+
+            sys.stdout.write("\x1b[?25l\n")
+
+        else:
+            def ticker() -> None:
+                pass
+
+        try:
+            log_data = parse_all_lines(
+                log_lines,
+                parse_line=self._line_parser,
+                ticker=ticker
+            )
+            enrich(
+                log_data,
+                self._hostname_db_path,
+                self._location_db_path,
+                ticker=ticker
+            )
+        finally:
+            if self._with_progress:
+                sys.stdout.write("\x1b[?25h\n\n")
+
         return coerce(pd.DataFrame(log_data))
 
     def ingest_monthly_logs(self) -> None:
@@ -267,7 +346,7 @@ class DataManager:
 
         def read_table(month_in_year: MonthInYear, path: Path) -> pyarrow.Table:
             frame = pd.read_parquet(path)
-            coverage.register_log_data(month_in_year, frame)
+            coverage.register_month(month_in_year, frame)
             return pyarrow.Table.from_pandas(frame)
 
         it = coverage.ingested_logs()
@@ -285,11 +364,13 @@ class DataManager:
         frames = []
         for month_in_year, source_path in coverage.ingested_logs():
             frame = pd.read_parquet(source_path)
-            coverage.register_log_data(month_in_year, frame)
+            coverage.register_month(month_in_year, frame)
             frames.append(frame)
 
         self._log_data = pd.concat(frames, ignore_index=True)
         self._log_data.to_parquet(target_path)
+
+        coverage.register_all(self._log_data)
         coverage.save()
 
     def combine_monthly_logs(self, /, incremental: bool = False) -> None:
@@ -323,9 +404,12 @@ def latest(
     root: str | Path,
     clean: bool = False,
     incremental: bool = False,
+    use_color: None | bool = None,
     **_: object,
 ) -> pd.DataFrame:
-    manager = DataManager(Path(root))
+    if use_color is None:
+        use_color = sys.stdout.isatty()
+    manager = DataManager(Path(root), with_progress=use_color)
     if clean:
         manager.clean_monthly_logs()
     manager.ingest_monthly_logs()
