@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import re
 import socket
-from typing import Any, Callable, cast, Optional, TypeAlias
+from typing import Any, cast, Optional, Protocol, TypeAlias
 
 from geoip2.database import Reader as LocationDatabaseReader
 from geoip2.errors import AddressNotFoundError
@@ -28,6 +28,35 @@ from .label import (
 )
 
 
+class LineParser(Protocol):
+    """
+    Parse a log line into a dictionary of keyed values. If the log line is
+    malformed, the line parser should not throw an exception but rather return
+    `None`.
+    """
+    def __call__(self, line: str) -> dict[str, Any] | None:
+        ...
+
+# The log data in columnar format.
+LogData: TypeAlias = defaultdict[str, list[Any]]
+
+class Ticker(Protocol):
+    """
+    A ticker is a callback tracking progress. It is invoked once for each
+    processed record.
+    """
+    def __call__(self) -> None:
+        ...
+
+class Pass(Ticker):
+    """The trivial ticker that doesn't do anything."""
+    def __call__(self) -> None:
+        pass
+
+# The canonical do nothing ticker.
+PASS = Pass()
+
+
 # ======================================================================================
 # Parse the Raw Log
 # ======================================================================================
@@ -42,8 +71,8 @@ from .label import (
 #
 # While Apache's behavior [is
 # documented](https://httpd.apache.org/docs/2.4/mod/mod_log_config.html),
-# determining which characters are escaped how requires inspecting the source
-# code for the
+# determining what characters are escaped in what way requires inspecting the
+# source code for the
 # [ap_escape_logitem](https://github.com/apache/httpd/blob/3e835f22affadfcfa3908277611a0e9961ece1c1/server/util.c#L2204)
 # function, which escapes octets before they are logged, and the
 # [gen_test_char.c](https://github.com/apache/httpd/blob/5c385f2b6c8352e2ca0665e66af022d6e936db6d/server/gen_test_char.c#L154)
@@ -193,13 +222,11 @@ def fill_log_record(fields: dict[str, Any]) -> dict[str, Any]:
     return fields
 
 
-LineParser = Callable[[str], dict[str, Any] | None]
-LogData: TypeAlias = defaultdict[str, list[Any]]
-
-
 def parse_all_lines(
     lines: Iterator[str],
+    *,
     parse_line: LineParser = parse_common_log_format,
+    ticker: Ticker = PASS,
 ) -> LogData:
     """Parse all lines in a log."""
     log_data: LogData = defaultdict(list)
@@ -213,6 +240,8 @@ def parse_all_lines(
         for key, value in log_record.items():
             log_data[key].append(value)
 
+        ticker()
+
     return log_data
 
 
@@ -221,7 +250,9 @@ def parse_all_lines(
 # ======================================================================================
 
 
-def enrich_client_name(log_data: LogData, hostname_db: Path) -> None:
+def enrich_client_name(
+    log_data: LogData, hostname_db: Path, *, ticker: Ticker = PASS
+) -> None:
     try:
         with open(hostname_db, mode='r', encoding='utf8') as file:
             hostnames = json.load(file)
@@ -239,6 +270,7 @@ def enrich_client_name(log_data: LogData, hostname_db: Path) -> None:
                 hostnames[address] = None
 
         names.append(hostnames[address])
+        ticker()
 
     with atomic_update(hostname_db) as file:
         json.dump(hostnames, file, indent=0, sort_keys=True)
@@ -247,7 +279,9 @@ def enrich_client_name(log_data: LogData, hostname_db: Path) -> None:
 # --------------------------------------------------------------------------------------
 
 
-def enrich_client_location(log_data: LogData, location_db: Path) -> None:
+def enrich_client_location(
+    log_data: LogData, location_db: Path, *, ticker: Ticker = PASS
+) -> None:
     assert not log_data['client_latitude']
     assert not log_data['client_longitude']
     assert not log_data['client_city']
@@ -278,6 +312,8 @@ def enrich_client_location(log_data: LogData, location_db: Path) -> None:
                 append_to_column('client_city', location.city.name)
                 append_to_column('client_country', location.country.iso_code)
 
+            ticker()
+
 
 # --------------------------------------------------------------------------------------
 
@@ -285,7 +321,7 @@ def enrich_client_location(log_data: LogData, location_db: Path) -> None:
 _VERSION_COMPONENTS = ('major', 'minor', 'patch', 'patch_minor')
 
 
-def enrich_user_agent(log_data: LogData) -> None:
+def enrich_user_agent(log_data: LogData, *, ticker: Ticker = PASS) -> None:
     assert not log_data['agent_family']
     assert not log_data['agent_version']
     assert not log_data['os_family']
@@ -312,8 +348,11 @@ def enrich_user_agent(log_data: LogData) -> None:
             append_to_column('device_model', None)
             append_to_column('is_bot1', False)
             append_to_column('is_bot2', False)
+
+            ticker()
             continue
 
+        # FIXME: Consider switching to new ua_parser API
         parts = parse_user_agent(user_agent)
         ua = parts['user_agent']
         os = parts['os']
@@ -332,15 +371,19 @@ def enrich_user_agent(log_data: LogData) -> None:
         append_to_column('is_bot1', 'Spider' in families and ua['family'] != 'WhatsApp')
         append_to_column('is_bot2', bot_detector.test(user_agent))
 
+        ticker()
+
 
 # --------------------------------------------------------------------------------------
 
 
-def enrich(log_data: LogData, hostname_db: Path, location_db: Path) -> None:
+def enrich(
+    log_data: LogData, hostname_db: Path, location_db: Path, ticker: Ticker = PASS
+) -> None:
     """
     Enrich the log data by looking up client IP addresses, client location, and
     parsing user agents.
     """
-    enrich_client_name(log_data, hostname_db)
-    enrich_client_location(log_data, location_db)
-    enrich_user_agent(log_data)
+    enrich_client_name(log_data, hostname_db, ticker=ticker)
+    enrich_client_location(log_data, location_db, ticker=ticker)
+    enrich_user_agent(log_data, ticker=ticker)
