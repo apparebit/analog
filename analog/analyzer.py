@@ -438,13 +438,21 @@ class FluentRate(FluentTerm[pd.DataFrame]):
         """Determine different status classes per month."""
         return self.value_counts("status_class")
 
-    def visitors(self) -> FluentDisplay[pd.Series]:
-        """Determine unique monthly visitors using IP address as proxy."""
-        df, _ = self._with_year_month()
+    def visitors(self, *, client_only: bool = False) -> FluentDisplay[pd.Series]:
+        """Determine unique monthly visitors."""
+        # See https://plausible.io/data-policy#how-we-count-unique-users-without-cookies
+        df, ts = self._with_year_month()
+
+        if client_only:
+            df["vtag"] = df["client_address"]
+        else:
+            dt = ts.dt.date.astype("string")
+            df["vtag"] = dt.str.cat([df["client_address"], df["user_agent"]], sep="‖")
+
         return FluentDisplay(
-            df.groupby(['year', 'month', 'client_address']).size()
-            .groupby(['year', 'month']).size()
-            .rename('visitors')
+            df.groupby(["year", "month", "vtag"]).size()
+            .groupby(["year", "month"]).size()
+            .rename("monthly_visitors" if client_only else "daily_visitors")
         )
 
     def value_counts(self, column: str) -> FluentDisplay[pd.DataFrame]:
@@ -640,6 +648,7 @@ def summarize(
         humans.only.successful().monthly.requests("successful"),
         page_views.monthly.requests("page_views"),
         page_views.monthly.visitors(),
+        page_views.monthly.visitors(client_only = True)
     ).data.fillna(0).astype(int)
 
     # Create zero-valued column with correct index
