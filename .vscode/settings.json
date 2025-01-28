@@ -20,7 +20,8 @@
     "Seriesful",
     "skipna",
     "tablefmt",
-    "unescapes"
+    "unescapes",
+    "vtag"
   ],
   "python.formatting.provider": "black",
   "notebook.output.textLineLimit": 1000
