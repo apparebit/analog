@@ -1,6 +1,6 @@
 from __future__ import annotations
 from calendar import monthrange
-from datetime import datetime, timedelta, timezone, tzinfo
+from datetime import date, datetime, timedelta, timezone, tzinfo
 from typing import (
     Literal, NamedTuple, overload, Protocol, runtime_checkable, Self, TYPE_CHECKING
 )
@@ -163,6 +163,12 @@ class MonthInYear(NamedTuple):
         """Determine the last moment for this month-in-year."""
         n = self.next()
         return datetime(n.year, n.month, 1, 0, 0, 0, 0, tz) - timedelta.resolution
+
+    def start_date(self) -> date:
+        return date(self.year, self.month, 1)
+
+    def end_date(self) -> date:
+        return date(self.year, self.month, self.days())
 
     def start_of_period(
         self,

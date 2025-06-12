@@ -2,7 +2,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Callable, Generic, NamedTuple, TypeAlias, TypeVar
+from typing import Callable, Generic, Literal, NamedTuple, TypeAlias, TypeVar
 
 import matplotlib as plt  # type: ignore[import]
 import pandas as pd
@@ -168,10 +168,16 @@ class FluentSentence(FluentTerm[pd.DataFrame]):
     # Compute Statistics With Rate, i.e., Per Month
 
     @property
+    def daily(self) -> FluentRate:
+        """Compute a daily breakdown of the data."""
+        # Force filter evaluation
+        return FluentRate(self.data, rate="daily")
+
+    @property
     def monthly(self) -> FluentRate:
         """Compute a monthly breakdown of the data."""
         # Force filter evaluation
-        return FluentRate(self.data)
+        return FluentRate(self.data, rate="monthly")
 
     # ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
     # Skip Statistics to Display
@@ -407,25 +413,49 @@ class FluentRangeSelection(FluentTerm[pd.DataFrame]):
             FluentSentence, lambda df: df["timestamp"].between(start, stop)
         )
 
+    def month_in_year(self, year: int, month: int) -> FluentSentence:
+        my = MonthInYear(year, month)
+        return self._filtering(
+            FluentSentence, lambda df: df["timestamp"].between(my.start(), my.stop())
+        )
+
 
 # --------------------------------------------------------------------------------------
 
 
 class FluentRate(FluentTerm[pd.DataFrame]):
-    def _with_year_month(self) -> tuple[pd.DataFrame, pd.Series]:
+
+    def __init__(  # type: ignore[no-any-unimported]
+        self,
+        data: DATA,
+        rate: Literal['daily', 'monthly'],
+    ) -> None:
+        super().__init__(data)  # type: ignore[arg-type]
+        self._rate = rate
+
+    @property
+    def _rate_columns(self) -> list[str]:
+        return ['year', 'month'] if self._rate == 'monthly' else ['date']
+
+    def _with_rate(self) -> tuple[pd.DataFrame, pd.Series]:
         # Copy dataframe before updating it in place.
         df = self.data.copy()
         ts = df['timestamp']
-        df.insert(1, 'month', ts.dt.month)
-        df.insert(1, 'year', ts.dt.year)
+
+        if self._rate == 'monthly':
+            df.insert(1, 'month', ts.dt.month)
+            df.insert(1, 'year', ts.dt.year)
+        else:
+            df.insert(1, 'date', ts.dt.date)
+
         return df, ts
 
     def requests(self, name: str = 'requests') -> FluentDisplay[pd.Series]:
-        """Count requests per month in a series with the given name."""
-        df, _ = self._with_year_month()
+        """Count requests per day/month in a series with the given name."""
+        df, _ = self._with_rate()
         return FluentDisplay(
             # Index is labeled multi-index thanks to groupby.
-            df.groupby(['year', 'month'])
+            df.groupby(self._rate_columns)
             .size()
             .rename(name)
         )
@@ -441,25 +471,27 @@ class FluentRate(FluentTerm[pd.DataFrame]):
     def visitors(self, *, client_only: bool = False) -> FluentDisplay[pd.Series]:
         """Determine unique monthly visitors."""
         # See https://plausible.io/data-policy#how-we-count-unique-users-without-cookies
-        df, ts = self._with_year_month()
+        df, ts = self._with_rate()
 
         if client_only:
             df["vtag"] = df["client_address"]
+            name = 'monthly_visitors' if self._rate == 'monthly' else 'daily_visitors'
         else:
             dt = ts.dt.date.astype("string")
             df["vtag"] = dt.str.cat([df["client_address"], df["user_agent"]], sep="‖")
+            name = 'daily_visitors'
 
         return FluentDisplay(
-            df.groupby(["year", "month", "vtag"]).size()
-            .groupby(["year", "month"]).size()
-            .rename("monthly_visitors" if client_only else "daily_visitors")
+            df.groupby([*self._rate_columns, "vtag"]).size()
+            .groupby(self._rate_columns).size()
+            .rename(name)
         )
 
     def value_counts(self, column: str) -> FluentDisplay[pd.DataFrame]:
         """Determine the counts of different values per month."""
-        df, ts = self._with_year_month()
-        df = df.groupby(['year', 'month', column]).size().unstack(fill_value=0)
-        return FluentDisplay(df[monthly_slice(ts)])
+        df, ts = self._with_rate()
+        df = df.groupby([*self._rate_columns, column]).size().unstack(fill_value=0)
+        return FluentDisplay(df[monthly_slice(ts)] if self._rate == "monthly" else df)
 
     # unique_values() make little sense on a monthly basis.
 
@@ -669,3 +701,30 @@ def summarize(
         MonthInYear(*summary.index[0]).validate(),
         MonthInYear(*summary.index[-1]).validate(),
     )
+
+
+def daily_summary(
+    data: FluentTerm[pd.DataFrame] | pd.DataFrame,
+) -> pd.DataFrame:
+    data = analyze(data)
+    humans = data.only.humans()
+    page_views = humans.only.successful().only.GET().only.markup()
+
+    summary = merge(
+        data.daily.requests("all_requests"),
+        data.only.bots().daily.requests("bots"),
+        humans.daily.requests("humans"),
+        humans.only.informational().daily.requests("informational"),
+        humans.only.client_error().daily.requests("client_errors"),
+        humans.only.server_error().daily.requests("server_errors"),
+        humans.only.redirected().daily.requests("redirected"),
+        humans.only.successful().daily.requests("successful"),
+        page_views.daily.requests("page_views"),
+        page_views.daily.visitors(),
+        page_views.daily.visitors(client_only = True)
+    ).data.fillna(0).astype(int)
+
+    # Create zero-valued column with correct index
+    summary["zeros"] = 0
+
+    return summary
