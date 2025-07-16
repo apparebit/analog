@@ -120,12 +120,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    section_number <span class="op">+=</span> <span class="dv">1</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> section_number</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="ss">f"&lt;h2&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. Traffic Summary&lt;/h2&gt;"</span>))</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="ss">f"&lt;h2 id=traffic-summary&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. Traffic Summary&lt;/h2&gt;"</span>))</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>analog.plot_monthly_summary(summary)</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="va">None</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<h2 class="anchored">1. Traffic Summary</h2>
+<h2 id="traffic-summary" class="anchored">1. Traffic Summary</h2>
 </div>
 <div class="cell-output cell-output-display">
 <p><img src="report_files/figure-html/cell-2-output-2.png" class="img-fluid"></p>
@@ -145,12 +145,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell" data-execution_count="3">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="ss">f"&lt;h2&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. Unique Visitors"</span>))</span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="ss">f"&lt;h2 id=unique-visitors&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. Unique Visitors"</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>analog.plot_visitors(summary)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="va">None</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<h2 class="anchored">2. Unique Visitors
+<h2 id="unique-visitors" class="anchored">2. Unique Visitors
 </h2></div>
 <div class="cell-output cell-output-display">
 <p><img src="report_files/figure-html/cell-4-output-2.png" class="img-fluid"></p>
@@ -159,35 +159,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell" data-execution_count="4">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate font license limits</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>max_views <span class="op">=</span> summary.data[<span class="st">"page_views"</span>].<span class="bu">max</span>()</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>txt <span class="op">=</span> <span class="ss">f"&lt;hr&gt;&lt;h2&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. Font Licensing&lt;/h2&gt;</span><span class="ch">\n</span><span class="ss">&lt;p&gt;"</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"✅"</span> <span class="cf">if</span> max_views <span class="op">&lt;=</span> <span class="dv">50_000</span> <span class="cf">else</span> <span class="st">"❌"</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="ss">f" The &lt;strong&gt;maximum of monthly page views is </span><span class="sc">{</span>max_views<span class="sc">:,}</span><span class="ss">&lt;/strong&gt;, which is "</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> max_views <span class="op">&gt;</span> <span class="dv">50_000</span>:</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    txt <span class="op">+=</span> <span class="st">"&lt;strong&gt;not&lt;/strong&gt; "</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"below Bely's license limit of 50,000.</span><span class="ch">\n</span><span class="st">&lt;p&gt;"</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>max_visitors <span class="op">=</span> summary.data[<span class="st">"daily_visitors"</span>].<span class="bu">max</span>()</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"✅"</span> <span class="cf">if</span> max_visitors <span class="op">&lt;=</span> <span class="dv">15_000</span> <span class="cf">else</span> <span class="st">"❌"</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="ss">f" The &lt;strong&gt;maximum of monthly visitors is </span><span class="sc">{</span>max_visitors<span class="sc">:,}</span><span class="ss">&lt;/strong&gt;, which is "</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> max_visitors <span class="op">&gt;</span> <span class="dv">15_000</span>:</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    txt <span class="op">+=</span> <span class="st">"&lt;strong&gt;not&lt;/strong&gt;"</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"below Bild's license limit of 15,000.</span><span class="ch">\n</span><span class="st">&lt;p&gt;The monthly visitors are computed "</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"based on a heuristic that is also &lt;a "</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"href='https://plausible.io/data-policy#how-we-count-unique-users-without-cookies'&gt;used "</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"by Plausible analytics&lt;/a&gt;. It counts unique tags computed by concatenating "</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"the date, the client IP address, and the user agent for non-bot page views."</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>display(HTML(txt))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> describe(out_of_policy: <span class="bu">int</span>, data: pd.DataFrame, column: <span class="bu">str</span>, unit: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> out_of_policy <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">"✅ No months are"</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> out_of_policy <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        year, month <span class="op">=</span> data.index[<span class="dv">0</span>]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        quant <span class="op">=</span> data[column].iat[<span class="dv">0</span>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f"⚠️ </span><span class="sc">{</span>year<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>month<span class="sc">:02d}</span><span class="ss"> has </span><span class="sc">{</span>quant<span class="sc">:,</span>d<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>unit<span class="sc">}</span><span class="ss"> and hence is"</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f"🛑 </span><span class="sc">{</span>out_of_policy<span class="sc">}</span><span class="ss"> months are"</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>txt <span class="op">=</span> <span class="ss">f"&lt;hr&gt;&lt;h2 id=font-licensing&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. Font Licensing&lt;/h2&gt;</span><span class="ch">\n</span><span class="ss">&lt;p&gt;"</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> summary.data</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>too_many_views <span class="op">=</span> dt[<span class="dv">50_000</span> <span class="op">&lt;</span> dt[<span class="st">"page_views"</span>]]</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>out_of_policy <span class="op">=</span> too_many_views.shape[<span class="dv">0</span>]</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> describe(out_of_policy, too_many_views, <span class="st">"page_views"</span>, <span class="st">"page views"</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">" out of policy for Bely's license limit of 50,000 page views per month."</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> out_of_policy <span class="op">==</span> <span class="dv">1</span> <span class="kw">and</span> too_many_views.index[<span class="dv">0</span>] <span class="op">==</span> (<span class="dv">2025</span>, <span class="dv">4</span>):</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    txt <span class="op">+=</span> <span class="ss">f" However, see &lt;a href=#april-2025-as-outlier&gt;Section&nbsp;</span><span class="sc">{</span>section_number <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">&lt;/a&gt; below."</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"</span><span class="ch">\n</span><span class="st">&lt;p&gt;"</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>too_many_visitors <span class="op">=</span> dt[<span class="dv">15_000</span> <span class="op">&lt;</span> dt[<span class="st">"monthly_visitors"</span>]]</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>out_of_policy <span class="op">=</span> too_many_visitors.shape[<span class="dv">0</span>]</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> describe(out_of_policy, too_many_visitors, <span class="st">"monthly_visitors"</span>, <span class="st">"page visits"</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">" out of policy for Bild's license limit of 15,000 unique monthly visitors.</span><span class="ch">\n</span><span class="st">&lt;p&gt;"</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"</span><span class="ch">\n</span><span class="st">&lt;p&gt;The unique monthly visitors are computed based on a heuristic that is also &lt;a "</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"href='https://plausible.io/data-policy#how-we-count-unique-users-without-cookies'&gt;used "</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"by Plausible analytics&lt;/a&gt;. It counts unique tags computed by concatenating "</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>txt <span class="op">+=</span> <span class="st">"the date, the client IP address, and the user agent for non-bot page views."</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>display(HTML(txt))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<hr><h2 class="anchored">3. Font Licensing</h2>
-<p>❌ The <strong>maximum of monthly page views is 72,046</strong>, which is <strong>not</strong> below Bely's license limit of 50,000.
-</p><p>✅ The <strong>maximum of monthly visitors is 2,752</strong>, which is below Bild's license limit of 15,000.
-</p><p>The monthly visitors are computed based on a heuristic that is also <a href="https://plausible.io/data-policy#how-we-count-unique-users-without-cookies">used by Plausible analytics</a>. It counts unique tags computed by concatenating the date, the client IP address, and the user agent for non-bot page views.
+<hr><h2 id="font-licensing" class="anchored">3. Font Licensing</h2>
+<p>⚠️ 2025-04 has 72,046 page views and hence is out of policy for Bely's license limit of 50,000 page views per month. However, see <a href="#april-2025-as-outlier">Section&nbsp;4</a> below.
+</p><p>✅ No months are out of policy for Bild's license limit of 15,000 unique monthly visitors.
+</p><p>
+</p><p>The unique monthly visitors are computed based on a heuristic that is also <a href="https://plausible.io/data-policy#how-we-count-unique-users-without-cookies">used by Plausible analytics</a>. It counts unique tags computed by concatenating the date, the client IP address, and the user agent for non-bot page views.
 </p></div>
 </div>
 <div class="cell" data-execution_count="5">
@@ -211,7 +224,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> analog.analyze(frame)</span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="ss">f"&lt;hr&gt;&lt;h2&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. April 2025 as Outlier&lt;/h2&gt;"</span>))</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>display(HTML(<span class="ss">f"&lt;hr&gt;&lt;h2 id=april-2025-as-outlier&gt;</span><span class="sc">{</span>sec()<span class="sc">}</span><span class="ss">. April 2025 as Outlier&lt;/h2&gt;"</span>))</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>that_month <span class="op">=</span> data.over.month_in_year(<span class="dv">2025</span>, <span class="dv">4</span>).only.humans()</span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>top10_pages <span class="op">=</span> page_rank(<span class="st">"april2025"</span>, that_month).head(<span class="dv">10</span>)</span>
@@ -223,7 +236,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>display(HTML(</span>
 <span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"""</span></span>
 <span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="ss">    &lt;p&gt;The following three tables show the top 10 pages, user agents, and IP</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="ss">    addresses:</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="ss">    addresses for that month:</span></span>
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="ss">    &lt;ul&gt;</span></span>
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="ss">    &lt;li&gt;Pages have a clear outlier: I Feel Love with </span><span class="sc">{</span>top_page_views<span class="sc">:,}</span><span class="ss"> views.</span></span>
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="ss">    &lt;li&gt;User agents seem ok.</span></span>
@@ -241,13 +254,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>display(top10_addresses.to_frame().style.<span class="bu">format</span>(thousands<span class="op">=</span><span class="st">","</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<hr><h2 class="anchored">4. April 2025 as Outlier</h2>
+<hr><h2 id="april-2025-as-outlier" class="anchored">4. April 2025 as Outlier</h2>
 </div>
 <div class="cell-output cell-output-display">
 
 
     <p>The following three tables show the top 10 pages, user agents, and IP
-    addresses:
+    addresses for that month:
     </p><ul>
     <li>Pages have a clear outlier: I Feel Love with 69,075 views.
     </li><li>User agents seem ok.
@@ -263,68 +276,68 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_d8067" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_ae319" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th colspan="2" id="T_d8067_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">april2025</th>
+<th colspan="2" id="T_ae319_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">april2025</th>
 </tr>
 <tr class="odd">
 <th class="blank level1" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_d8067_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_d8067_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
+<th id="T_ae319_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_ae319_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_d8067_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
-<td id="T_d8067_row0_col0" class="data row0 col0">/blog/2019/i-feel-love</td>
-<td id="T_d8067_row0_col1" class="data row0 col1">69,075</td>
+<td id="T_ae319_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
+<td id="T_ae319_row0_col0" class="data row0 col0">/blog/2019/i-feel-love</td>
+<td id="T_ae319_row0_col1" class="data row0 col1">69,075</td>
 </tr>
 <tr class="even">
-<td id="T_d8067_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
-<td id="T_d8067_row1_col0" class="data row1 col0">/</td>
-<td id="T_d8067_row1_col1" class="data row1 col1">926</td>
+<td id="T_ae319_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
+<td id="T_ae319_row1_col0" class="data row1 col0">/</td>
+<td id="T_ae319_row1_col1" class="data row1 col1">926</td>
 </tr>
 <tr class="odd">
-<td id="T_d8067_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
-<td id="T_d8067_row2_col0" class="data row2 col0">/blog/2022/wrong-impression</td>
-<td id="T_d8067_row2_col1" class="data row2 col1">455</td>
+<td id="T_ae319_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
+<td id="T_ae319_row2_col0" class="data row2 col0">/blog/2022/wrong-impression</td>
+<td id="T_ae319_row2_col1" class="data row2 col1">455</td>
 </tr>
 <tr class="even">
-<td id="T_d8067_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
-<td id="T_d8067_row3_col0" class="data row3 col0">/blog</td>
-<td id="T_d8067_row3_col1" class="data row3 col1">178</td>
+<td id="T_ae319_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
+<td id="T_ae319_row3_col0" class="data row3 col0">/blog</td>
+<td id="T_ae319_row3_col1" class="data row3 col1">178</td>
 </tr>
 <tr class="odd">
-<td id="T_d8067_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
-<td id="T_d8067_row4_col0" class="data row4 col0">/blog/2023/great-men</td>
-<td id="T_d8067_row4_col1" class="data row4 col1">114</td>
+<td id="T_ae319_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
+<td id="T_ae319_row4_col0" class="data row4 col0">/blog/2023/great-men</td>
+<td id="T_ae319_row4_col1" class="data row4 col1">114</td>
 </tr>
 <tr class="even">
-<td id="T_d8067_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
-<td id="T_d8067_row5_col0" class="data row5 col0">/about/apparebit</td>
-<td id="T_d8067_row5_col1" class="data row5 col1">105</td>
+<td id="T_ae319_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
+<td id="T_ae319_row5_col0" class="data row5 col0">/about/apparebit</td>
+<td id="T_ae319_row5_col1" class="data row5 col1">105</td>
 </tr>
 <tr class="odd">
-<td id="T_d8067_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
-<td id="T_d8067_row6_col0" class="data row6 col0">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_d8067_row6_col1" class="data row6 col1">75</td>
+<td id="T_ae319_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
+<td id="T_ae319_row6_col0" class="data row6 col0">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_ae319_row6_col1" class="data row6 col1">75</td>
 </tr>
 <tr class="even">
-<td id="T_d8067_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
-<td id="T_d8067_row7_col0" class="data row7 col0">/blog/2022/zuckerberg-lies</td>
-<td id="T_d8067_row7_col1" class="data row7 col1">72</td>
+<td id="T_ae319_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
+<td id="T_ae319_row7_col0" class="data row7 col0">/blog/2022/zuckerberg-lies</td>
+<td id="T_ae319_row7_col1" class="data row7 col1">72</td>
 </tr>
 <tr class="odd">
-<td id="T_d8067_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
-<td id="T_d8067_row8_col0" class="data row8 col0">/about/robert-grimm</td>
-<td id="T_d8067_row8_col1" class="data row8 col1">70</td>
+<td id="T_ae319_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
+<td id="T_ae319_row8_col0" class="data row8 col0">/about/robert-grimm</td>
+<td id="T_ae319_row8_col1" class="data row8 col1">70</td>
 </tr>
 <tr class="even">
-<td id="T_d8067_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
-<td id="T_d8067_row9_col0" class="data row9 col0">/about/privacy</td>
-<td id="T_d8067_row9_col1" class="data row9 col1">65</td>
+<td id="T_ae319_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
+<td id="T_ae319_row9_col0" class="data row9 col0">/about/privacy</td>
+<td id="T_ae319_row9_col1" class="data row9 col1">65</td>
 </tr>
 </tbody>
 </table>
@@ -333,11 +346,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_23060" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_a29d3" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_23060_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">count</th>
+<th id="T_a29d3_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">count</th>
 </tr>
 <tr class="odd">
 <th class="index_name level0" data-quarto-table-cell-role="th">user_agent</th>
@@ -346,44 +359,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_23060_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36</td>
-<td id="T_23060_row0_col0" class="data row0 col0">2,151</td>
+<td id="T_a29d3_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36</td>
+<td id="T_a29d3_row0_col0" class="data row0 col0">2,151</td>
 </tr>
 <tr class="even">
-<td id="T_23060_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36</td>
-<td id="T_23060_row1_col0" class="data row1 col0">2,070</td>
+<td id="T_a29d3_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36</td>
+<td id="T_a29d3_row1_col0" class="data row1 col0">2,070</td>
 </tr>
 <tr class="odd">
-<td id="T_23060_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1</td>
-<td id="T_23060_row2_col0" class="data row2 col0">1,078</td>
+<td id="T_a29d3_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1</td>
+<td id="T_a29d3_row2_col0" class="data row2 col0">1,078</td>
 </tr>
 <tr class="even">
-<td id="T_23060_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36</td>
-<td id="T_23060_row3_col0" class="data row3 col0">505</td>
+<td id="T_a29d3_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36</td>
+<td id="T_a29d3_row3_col0" class="data row3 col0">505</td>
 </tr>
 <tr class="odd">
-<td id="T_23060_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36</td>
-<td id="T_23060_row4_col0" class="data row4 col0">473</td>
+<td id="T_a29d3_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36</td>
+<td id="T_a29d3_row4_col0" class="data row4 col0">473</td>
 </tr>
 <tr class="even">
-<td id="T_23060_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">Mozlila/5.0 (Linux; Android 7.0; SM-G892A Bulid/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/60.0.3112.107 Moblie Safari/537.36</td>
-<td id="T_23060_row5_col0" class="data row5 col0">378</td>
+<td id="T_a29d3_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">Mozlila/5.0 (Linux; Android 7.0; SM-G892A Bulid/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/60.0.3112.107 Moblie Safari/537.36</td>
+<td id="T_a29d3_row5_col0" class="data row5 col0">378</td>
 </tr>
 <tr class="odd">
-<td id="T_23060_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/6.0)</td>
-<td id="T_23060_row6_col0" class="data row6 col0">267</td>
+<td id="T_a29d3_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/6.0)</td>
+<td id="T_a29d3_row6_col0" class="data row6 col0">267</td>
 </tr>
 <tr class="even">
-<td id="T_23060_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">Mozilla/5.0 (iPhone; CPU iPhone OS 18_3_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3.1 Mobile/15E148 Safari/604.1</td>
-<td id="T_23060_row7_col0" class="data row7 col0">239</td>
+<td id="T_a29d3_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">Mozilla/5.0 (iPhone; CPU iPhone OS 18_3_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3.1 Mobile/15E148 Safari/604.1</td>
+<td id="T_a29d3_row7_col0" class="data row7 col0">239</td>
 </tr>
 <tr class="odd">
-<td id="T_23060_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36</td>
-<td id="T_23060_row8_col0" class="data row8 col0">235</td>
+<td id="T_a29d3_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36</td>
+<td id="T_a29d3_row8_col0" class="data row8 col0">235</td>
 </tr>
 <tr class="even">
-<td id="T_23060_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">Go-http-client/2.0</td>
-<td id="T_23060_row9_col0" class="data row9 col0">207</td>
+<td id="T_a29d3_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">Go-http-client/2.0</td>
+<td id="T_a29d3_row9_col0" class="data row9 col0">207</td>
 </tr>
 </tbody>
 </table>
@@ -392,11 +405,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_f5fb9" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_17cdd" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_f5fb9_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">count</th>
+<th id="T_17cdd_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">count</th>
 </tr>
 <tr class="odd">
 <th class="index_name level0" data-quarto-table-cell-role="th">client_address</th>
@@ -405,44 +418,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_f5fb9_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">13.94.89.4</td>
-<td id="T_f5fb9_row0_col0" class="data row0 col0">5,550</td>
+<td id="T_17cdd_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">13.94.89.4</td>
+<td id="T_17cdd_row0_col0" class="data row0 col0">5,550</td>
 </tr>
 <tr class="even">
-<td id="T_f5fb9_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">52.184.145.227</td>
-<td id="T_f5fb9_row1_col0" class="data row1 col0">2,919</td>
+<td id="T_17cdd_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">52.184.145.227</td>
+<td id="T_17cdd_row1_col0" class="data row1 col0">2,919</td>
 </tr>
 <tr class="odd">
-<td id="T_f5fb9_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">13.94.89.90</td>
-<td id="T_f5fb9_row2_col0" class="data row2 col0">2,736</td>
+<td id="T_17cdd_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">13.94.89.90</td>
+<td id="T_17cdd_row2_col0" class="data row2 col0">2,736</td>
 </tr>
 <tr class="even">
-<td id="T_f5fb9_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">40.69.216.16</td>
-<td id="T_f5fb9_row3_col0" class="data row3 col0">2,473</td>
+<td id="T_17cdd_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">40.69.216.16</td>
+<td id="T_17cdd_row3_col0" class="data row3 col0">2,473</td>
 </tr>
 <tr class="odd">
-<td id="T_f5fb9_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">52.169.144.138</td>
-<td id="T_f5fb9_row4_col0" class="data row4 col0">2,145</td>
+<td id="T_17cdd_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">52.169.144.138</td>
+<td id="T_17cdd_row4_col0" class="data row4 col0">2,145</td>
 </tr>
 <tr class="even">
-<td id="T_f5fb9_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">52.167.133.1</td>
-<td id="T_f5fb9_row5_col0" class="data row5 col0">2,106</td>
+<td id="T_17cdd_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">52.167.133.1</td>
+<td id="T_17cdd_row5_col0" class="data row5 col0">2,106</td>
 </tr>
 <tr class="odd">
-<td id="T_f5fb9_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">172.190.142.176</td>
-<td id="T_f5fb9_row6_col0" class="data row6 col0">1,666</td>
+<td id="T_17cdd_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">172.190.142.176</td>
+<td id="T_17cdd_row6_col0" class="data row6 col0">1,666</td>
 </tr>
 <tr class="even">
-<td id="T_f5fb9_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">13.90.159.79</td>
-<td id="T_f5fb9_row7_col0" class="data row7 col0">1,661</td>
+<td id="T_17cdd_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">13.90.159.79</td>
+<td id="T_17cdd_row7_col0" class="data row7 col0">1,661</td>
 </tr>
 <tr class="odd">
-<td id="T_f5fb9_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">52.164.243.23</td>
-<td id="T_f5fb9_row8_col0" class="data row8 col0">1,439</td>
+<td id="T_17cdd_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">52.164.243.23</td>
+<td id="T_17cdd_row8_col0" class="data row8 col0">1,439</td>
 </tr>
 <tr class="even">
-<td id="T_f5fb9_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">52.169.84.100</td>
-<td id="T_f5fb9_row9_col0" class="data row9 col0">1,412</td>
+<td id="T_17cdd_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">52.169.84.100</td>
+<td id="T_17cdd_row9_col0" class="data row9 col0">1,412</td>
 </tr>
 </tbody>
 </table>
@@ -477,267 +490,267 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_afac5" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_c6360" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th colspan="2" id="T_afac5_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
-<th colspan="2" id="T_afac5_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">last_year</th>
-<th colspan="2" id="T_afac5_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">all_time</th>
+<th colspan="2" id="T_c6360_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
+<th colspan="2" id="T_c6360_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">last_year</th>
+<th colspan="2" id="T_c6360_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">all_time</th>
 </tr>
 <tr class="odd">
 <th class="blank level1" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_afac5_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_afac5_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
-<th id="T_afac5_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_afac5_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">count</th>
-<th id="T_afac5_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_afac5_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
+<th id="T_c6360_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_c6360_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
+<th id="T_c6360_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_c6360_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">count</th>
+<th id="T_c6360_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_c6360_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_afac5_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
-<td id="T_afac5_row0_col0" class="data row0 col0">/blog/2019/i-feel-love</td>
-<td id="T_afac5_row0_col1" class="data row0 col1">34,184</td>
-<td id="T_afac5_row0_col2" class="data row0 col2">/blog/2019/i-feel-love</td>
-<td id="T_afac5_row0_col3" class="data row0 col3">141,970</td>
-<td id="T_afac5_row0_col4" class="data row0 col4">/blog/2019/i-feel-love</td>
-<td id="T_afac5_row0_col5" class="data row0 col5">231,805</td>
+<td id="T_c6360_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
+<td id="T_c6360_row0_col0" class="data row0 col0">/blog/2019/i-feel-love</td>
+<td id="T_c6360_row0_col1" class="data row0 col1">1,794</td>
+<td id="T_c6360_row0_col2" class="data row0 col2">/blog/2019/i-feel-love</td>
+<td id="T_c6360_row0_col3" class="data row0 col3">143,776</td>
+<td id="T_c6360_row0_col4" class="data row0 col4">/blog/2019/i-feel-love</td>
+<td id="T_c6360_row0_col5" class="data row0 col5">233,611</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
-<td id="T_afac5_row1_col0" class="data row1 col0">/</td>
-<td id="T_afac5_row1_col1" class="data row1 col1">1,647</td>
-<td id="T_afac5_row1_col2" class="data row1 col2">/</td>
-<td id="T_afac5_row1_col3" class="data row1 col3">5,252</td>
-<td id="T_afac5_row1_col4" class="data row1 col4">/</td>
-<td id="T_afac5_row1_col5" class="data row1 col5">42,444</td>
+<td id="T_c6360_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
+<td id="T_c6360_row1_col0" class="data row1 col0">/</td>
+<td id="T_c6360_row1_col1" class="data row1 col1">1,062</td>
+<td id="T_c6360_row1_col2" class="data row1 col2">/</td>
+<td id="T_c6360_row1_col3" class="data row1 col3">6,323</td>
+<td id="T_c6360_row1_col4" class="data row1 col4">/</td>
+<td id="T_c6360_row1_col5" class="data row1 col5">43,515</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
-<td id="T_afac5_row2_col0" class="data row2 col0">/blog/2022/wrong-impression</td>
-<td id="T_afac5_row2_col1" class="data row2 col1">573</td>
-<td id="T_afac5_row2_col2" class="data row2 col2">/blog/2022/wrong-impression</td>
-<td id="T_afac5_row2_col3" class="data row2 col3">2,423</td>
-<td id="T_afac5_row2_col4" class="data row2 col4">/blog/2022/wrong-impression</td>
-<td id="T_afac5_row2_col5" class="data row2 col5">6,950</td>
+<td id="T_c6360_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
+<td id="T_c6360_row2_col0" class="data row2 col0">/blog/2022/wrong-impression</td>
+<td id="T_c6360_row2_col1" class="data row2 col1">564</td>
+<td id="T_c6360_row2_col2" class="data row2 col2">/blog/2022/wrong-impression</td>
+<td id="T_c6360_row2_col3" class="data row2 col3">2,992</td>
+<td id="T_c6360_row2_col4" class="data row2 col4">/blog/2022/wrong-impression</td>
+<td id="T_c6360_row2_col5" class="data row2 col5">7,519</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
-<td id="T_afac5_row3_col0" class="data row3 col0">/blog</td>
-<td id="T_afac5_row3_col1" class="data row3 col1">214</td>
-<td id="T_afac5_row3_col2" class="data row3 col2">/blog</td>
-<td id="T_afac5_row3_col3" class="data row3 col3">712</td>
-<td id="T_afac5_row3_col4" class="data row3 col4">/blog</td>
-<td id="T_afac5_row3_col5" class="data row3 col5">3,396</td>
+<td id="T_c6360_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
+<td id="T_c6360_row3_col0" class="data row3 col0">/blog</td>
+<td id="T_c6360_row3_col1" class="data row3 col1">189</td>
+<td id="T_c6360_row3_col2" class="data row3 col2">/blog</td>
+<td id="T_c6360_row3_col3" class="data row3 col3">903</td>
+<td id="T_c6360_row3_col4" class="data row3 col4">/blog</td>
+<td id="T_c6360_row3_col5" class="data row3 col5">3,587</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
-<td id="T_afac5_row4_col0" class="data row4 col0">/blog/2023/great-men</td>
-<td id="T_afac5_row4_col1" class="data row4 col1">101</td>
-<td id="T_afac5_row4_col2" class="data row4 col2">/blog/2023/great-men</td>
-<td id="T_afac5_row4_col3" class="data row4 col3">454</td>
-<td id="T_afac5_row4_col4" class="data row4 col4">/about/apparebit</td>
-<td id="T_afac5_row4_col5" class="data row4 col5">3,029</td>
+<td id="T_c6360_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
+<td id="T_c6360_row4_col0" class="data row4 col0">/blog/2023/great-men</td>
+<td id="T_c6360_row4_col1" class="data row4 col1">90</td>
+<td id="T_c6360_row4_col2" class="data row4 col2">/blog/2023/great-men</td>
+<td id="T_c6360_row4_col3" class="data row4 col3">545</td>
+<td id="T_c6360_row4_col4" class="data row4 col4">/about/apparebit</td>
+<td id="T_c6360_row4_col5" class="data row4 col5">3,116</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
-<td id="T_afac5_row5_col0" class="data row5 col0">/blog/2022/zuckerberg-lies</td>
-<td id="T_afac5_row5_col1" class="data row5 col1">94</td>
-<td id="T_afac5_row5_col2" class="data row5 col2">/about/apparebit</td>
-<td id="T_afac5_row5_col3" class="data row5 col3">414</td>
-<td id="T_afac5_row5_col4" class="data row5 col4">/blog/2021/game-of-thrones</td>
-<td id="T_afac5_row5_col5" class="data row5 col5">2,640</td>
+<td id="T_c6360_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
+<td id="T_c6360_row5_col0" class="data row5 col0">/about/apparebit</td>
+<td id="T_c6360_row5_col1" class="data row5 col1">86</td>
+<td id="T_c6360_row5_col2" class="data row5 col2">/about/apparebit</td>
+<td id="T_c6360_row5_col3" class="data row5 col3">501</td>
+<td id="T_c6360_row5_col4" class="data row5 col4">/blog/2021/game-of-thrones</td>
+<td id="T_c6360_row5_col5" class="data row5 col5">2,715</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
-<td id="T_afac5_row6_col0" class="data row6 col0">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_afac5_row6_col1" class="data row6 col1">88</td>
-<td id="T_afac5_row6_col2" class="data row6 col2">/blog/2022/zuckerberg-lies</td>
-<td id="T_afac5_row6_col3" class="data row6 col3">302</td>
-<td id="T_afac5_row6_col4" class="data row6 col4">/about/privacy</td>
-<td id="T_afac5_row6_col5" class="data row6 col5">1,964</td>
+<td id="T_c6360_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
+<td id="T_c6360_row6_col0" class="data row6 col0">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_c6360_row6_col1" class="data row6 col1">84</td>
+<td id="T_c6360_row6_col2" class="data row6 col2">/blog/2022/zuckerberg-lies</td>
+<td id="T_c6360_row6_col3" class="data row6 col3">386</td>
+<td id="T_c6360_row6_col4" class="data row6 col4">/about/privacy</td>
+<td id="T_c6360_row6_col5" class="data row6 col5">2,019</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
-<td id="T_afac5_row7_col0" class="data row7 col0">/blog/2022/new-map-layers</td>
-<td id="T_afac5_row7_col1" class="data row7 col1">86</td>
-<td id="T_afac5_row7_col2" class="data row7 col2">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_afac5_row7_col3" class="data row7 col3">296</td>
-<td id="T_afac5_row7_col4" class="data row7 col4">/about/robert-grimm</td>
-<td id="T_afac5_row7_col5" class="data row7 col5">1,874</td>
+<td id="T_c6360_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
+<td id="T_c6360_row7_col0" class="data row7 col0">/blog/2022/zuckerberg-lies</td>
+<td id="T_c6360_row7_col1" class="data row7 col1">83</td>
+<td id="T_c6360_row7_col2" class="data row7 col2">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_c6360_row7_col3" class="data row7 col3">381</td>
+<td id="T_c6360_row7_col4" class="data row7 col4">/about/robert-grimm</td>
+<td id="T_c6360_row7_col5" class="data row7 col5">1,944</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
-<td id="T_afac5_row8_col0" class="data row8 col0">/blog/2021/lets-try-again</td>
-<td id="T_afac5_row8_col1" class="data row8 col1">81</td>
-<td id="T_afac5_row8_col2" class="data row8 col2">/blog/2022/new-map-layers</td>
-<td id="T_afac5_row8_col3" class="data row8 col3">284</td>
-<td id="T_afac5_row8_col4" class="data row8 col4">/features/ubu-trump</td>
-<td id="T_afac5_row8_col5" class="data row8 col5">1,836</td>
+<td id="T_c6360_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
+<td id="T_c6360_row8_col0" class="data row8 col0">/blog/2022/new-map-layers</td>
+<td id="T_c6360_row8_col1" class="data row8 col1">82</td>
+<td id="T_c6360_row8_col2" class="data row8 col2">/blog/2022/new-map-layers</td>
+<td id="T_c6360_row8_col3" class="data row8 col3">367</td>
+<td id="T_c6360_row8_col4" class="data row8 col4">/features/ubu-trump</td>
+<td id="T_c6360_row8_col5" class="data row8 col5">1,884</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
-<td id="T_afac5_row9_col0" class="data row9 col0">/about/apparebit</td>
-<td id="T_afac5_row9_col1" class="data row9 col1">80</td>
-<td id="T_afac5_row9_col2" class="data row9 col2">/about/robert-grimm</td>
-<td id="T_afac5_row9_col3" class="data row9 col3">270</td>
-<td id="T_afac5_row9_col4" class="data row9 col4">/blog/2023/great-men</td>
-<td id="T_afac5_row9_col5" class="data row9 col5">1,575</td>
+<td id="T_c6360_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
+<td id="T_c6360_row9_col0" class="data row9 col0">/blog/2021/lets-try-again</td>
+<td id="T_c6360_row9_col1" class="data row9 col1">76</td>
+<td id="T_c6360_row9_col2" class="data row9 col2">/about/robert-grimm</td>
+<td id="T_c6360_row9_col3" class="data row9 col3">340</td>
+<td id="T_c6360_row9_col4" class="data row9 col4">/blog/2023/great-men</td>
+<td id="T_c6360_row9_col5" class="data row9 col5">1,666</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">10</td>
-<td id="T_afac5_row10_col0" class="data row10 col0">/blog/2018/the-donald-is-in-love</td>
-<td id="T_afac5_row10_col1" class="data row10 col1">79</td>
-<td id="T_afac5_row10_col2" class="data row10 col2">/blog/2021/lets-try-again</td>
-<td id="T_afac5_row10_col3" class="data row10 col3">246</td>
-<td id="T_afac5_row10_col4" class="data row10 col4">/features/do-you-be</td>
-<td id="T_afac5_row10_col5" class="data row10 col5">1,573</td>
+<td id="T_c6360_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">10</td>
+<td id="T_c6360_row10_col0" class="data row10 col0">/blog/2021/game-of-thrones</td>
+<td id="T_c6360_row10_col1" class="data row10 col1">74</td>
+<td id="T_c6360_row10_col2" class="data row10 col2">/blog/2021/lets-try-again</td>
+<td id="T_c6360_row10_col3" class="data row10 col3">323</td>
+<td id="T_c6360_row10_col4" class="data row10 col4">/features/do-you-be</td>
+<td id="T_c6360_row10_col5" class="data row10 col5">1,606</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">11</td>
-<td id="T_afac5_row11_col0" class="data row11 col0">/blog/2016/hopelessness</td>
-<td id="T_afac5_row11_col1" class="data row11 col1">78</td>
-<td id="T_afac5_row11_col2" class="data row11 col2">/blog/2018/the-donald-is-in-love</td>
-<td id="T_afac5_row11_col3" class="data row11 col3">239</td>
-<td id="T_afac5_row11_col4" class="data row11 col4">/features/esteban</td>
-<td id="T_afac5_row11_col5" class="data row11 col5">1,227</td>
+<td id="T_c6360_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">11</td>
+<td id="T_c6360_row11_col0" class="data row11 col0">/blog/2016/hopelessness</td>
+<td id="T_c6360_row11_col1" class="data row11 col1">71</td>
+<td id="T_c6360_row11_col2" class="data row11 col2">/blog/2018/the-donald-is-in-love</td>
+<td id="T_c6360_row11_col3" class="data row11 col3">310</td>
+<td id="T_c6360_row11_col4" class="data row11 col4">/features/esteban</td>
+<td id="T_c6360_row11_col5" class="data row11 col5">1,284</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">12</td>
-<td id="T_afac5_row12_col0" class="data row12 col0">/blog/2021/game-of-thrones</td>
-<td id="T_afac5_row12_col1" class="data row12 col1">75</td>
-<td id="T_afac5_row12_col2" class="data row12 col2">/blog/2016/hopelessness</td>
-<td id="T_afac5_row12_col3" class="data row12 col3">236</td>
-<td id="T_afac5_row12_col4" class="data row12 col4">/blog/2016/hopelessness</td>
-<td id="T_afac5_row12_col5" class="data row12 col5">1,166</td>
+<td id="T_c6360_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">12</td>
+<td id="T_c6360_row12_col0" class="data row12 col0">/blog/2022/mapping-package-management</td>
+<td id="T_c6360_row12_col1" class="data row12 col1">70</td>
+<td id="T_c6360_row12_col2" class="data row12 col2">/blog/2016/hopelessness</td>
+<td id="T_c6360_row12_col3" class="data row12 col3">308</td>
+<td id="T_c6360_row12_col4" class="data row12 col4">/blog/2016/hopelessness</td>
+<td id="T_c6360_row12_col5" class="data row12 col5">1,238</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">13</td>
-<td id="T_afac5_row13_col0" class="data row13 col0">/blog/2022/mapping-package-management</td>
-<td id="T_afac5_row13_col1" class="data row13 col1">74</td>
-<td id="T_afac5_row13_col2" class="data row13 col2">/about/privacy</td>
-<td id="T_afac5_row13_col3" class="data row13 col3">234</td>
-<td id="T_afac5_row13_col4" class="data row13 col4">/blog/2022/zuckerberg-lies</td>
-<td id="T_afac5_row13_col5" class="data row13 col5">1,066</td>
+<td id="T_c6360_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">13</td>
+<td id="T_c6360_row13_col0" class="data row13 col0">/blog/2018/the-donald-is-in-love</td>
+<td id="T_c6360_row13_col1" class="data row13 col1">70</td>
+<td id="T_c6360_row13_col2" class="data row13 col2">/blog/2021/game-of-thrones</td>
+<td id="T_c6360_row13_col3" class="data row13 col3">304</td>
+<td id="T_c6360_row13_col4" class="data row13 col4">/blog/2022/zuckerberg-lies</td>
+<td id="T_c6360_row13_col5" class="data row13 col5">1,150</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">14</td>
-<td id="T_afac5_row14_col0" class="data row14 col0">/blog/2018/we-were-grey</td>
-<td id="T_afac5_row14_col1" class="data row14 col1">74</td>
-<td id="T_afac5_row14_col2" class="data row14 col2">/blog/2021/game-of-thrones</td>
-<td id="T_afac5_row14_col3" class="data row14 col3">229</td>
-<td id="T_afac5_row14_col4" class="data row14 col4">/features/candy-or-bust</td>
-<td id="T_afac5_row14_col5" class="data row14 col5">1,065</td>
+<td id="T_c6360_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">14</td>
+<td id="T_c6360_row14_col0" class="data row14 col0">/blog/2022/your-own-kind-of-map</td>
+<td id="T_c6360_row14_col1" class="data row14 col1">70</td>
+<td id="T_c6360_row14_col2" class="data row14 col2">/blog/2022/mapping-package-management</td>
+<td id="T_c6360_row14_col3" class="data row14 col3">296</td>
+<td id="T_c6360_row14_col4" class="data row14 col4">/blog/2019/a-frivolous-perspective</td>
+<td id="T_c6360_row14_col5" class="data row14 col5">1,100</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">15</td>
-<td id="T_afac5_row15_col0" class="data row15 col0">/blog/2022/your-own-kind-of-map</td>
-<td id="T_afac5_row15_col1" class="data row15 col1">74</td>
-<td id="T_afac5_row15_col2" class="data row15 col2">/features/esteban</td>
-<td id="T_afac5_row15_col3" class="data row15 col3">228</td>
-<td id="T_afac5_row15_col4" class="data row15 col4">/about/robert-grimm/with-halo</td>
-<td id="T_afac5_row15_col5" class="data row15 col5">1,051</td>
+<td id="T_c6360_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">15</td>
+<td id="T_c6360_row15_col0" class="data row15 col0">/about/robert-grimm</td>
+<td id="T_c6360_row15_col1" class="data row15 col1">69</td>
+<td id="T_c6360_row15_col2" class="data row15 col2">/blog/2019/a-frivolous-perspective</td>
+<td id="T_c6360_row15_col3" class="data row15 col3">295</td>
+<td id="T_c6360_row15_col4" class="data row15 col4">/features/candy-or-bust</td>
+<td id="T_c6360_row15_col5" class="data row15 col5">1,096</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">16</td>
-<td id="T_afac5_row16_col0" class="data row16 col0">/blog/2019/a-frivolous-perspective</td>
-<td id="T_afac5_row16_col1" class="data row16 col1">73</td>
-<td id="T_afac5_row16_col2" class="data row16 col2">/blog/2019/a-frivolous-perspective</td>
-<td id="T_afac5_row16_col3" class="data row16 col3">228</td>
-<td id="T_afac5_row16_col4" class="data row16 col4">/blog/2019/a-frivolous-perspective</td>
-<td id="T_afac5_row16_col5" class="data row16 col5">1,033</td>
+<td id="T_c6360_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">16</td>
+<td id="T_c6360_row16_col0" class="data row16 col0">/blog/2018/we-were-grey</td>
+<td id="T_c6360_row16_col1" class="data row16 col1">67</td>
+<td id="T_c6360_row16_col2" class="data row16 col2">/blog/2022/your-own-kind-of-map</td>
+<td id="T_c6360_row16_col3" class="data row16 col3">294</td>
+<td id="T_c6360_row16_col4" class="data row16 col4">/blog/2022/new-map-layers</td>
+<td id="T_c6360_row16_col5" class="data row16 col5">1,096</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">17</td>
-<td id="T_afac5_row17_col0" class="data row17 col0">/blog/2018/utopia-where-we-find-it</td>
-<td id="T_afac5_row17_col1" class="data row17 col1">70</td>
-<td id="T_afac5_row17_col2" class="data row17 col2">/blog/2018/we-were-grey</td>
-<td id="T_afac5_row17_col3" class="data row17 col3">226</td>
-<td id="T_afac5_row17_col4" class="data row17 col4">/blog/2022/new-map-layers</td>
-<td id="T_afac5_row17_col5" class="data row17 col5">1,013</td>
+<td id="T_c6360_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">17</td>
+<td id="T_c6360_row17_col0" class="data row17 col0">/blog/2018/utopia-where-we-find-it</td>
+<td id="T_c6360_row17_col1" class="data row17 col1">67</td>
+<td id="T_c6360_row17_col2" class="data row17 col2">/blog/2018/we-were-grey</td>
+<td id="T_c6360_row17_col3" class="data row17 col3">294</td>
+<td id="T_c6360_row17_col4" class="data row17 col4">/about/robert-grimm/with-halo</td>
+<td id="T_c6360_row17_col5" class="data row17 col5">1,078</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">18</td>
-<td id="T_afac5_row18_col0" class="data row18 col0">/about/robert-grimm</td>
-<td id="T_afac5_row18_col1" class="data row18 col1">56</td>
-<td id="T_afac5_row18_col2" class="data row18 col2">/blog/2022/mapping-package-management</td>
-<td id="T_afac5_row18_col3" class="data row18 col3">225</td>
-<td id="T_afac5_row18_col4" class="data row18 col4">/blog/2018/utopia-where-we-find-it</td>
-<td id="T_afac5_row18_col5" class="data row18 col5">1,003</td>
+<td id="T_c6360_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">18</td>
+<td id="T_c6360_row18_col0" class="data row18 col0">/blog/2019/a-frivolous-perspective</td>
+<td id="T_c6360_row18_col1" class="data row18 col1">66</td>
+<td id="T_c6360_row18_col2" class="data row18 col2">/about/privacy</td>
+<td id="T_c6360_row18_col3" class="data row18 col3">289</td>
+<td id="T_c6360_row18_col4" class="data row18 col4">/blog/2018/utopia-where-we-find-it</td>
+<td id="T_c6360_row18_col5" class="data row18 col5">1,071</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">19</td>
-<td id="T_afac5_row19_col0" class="data row19 col0">/features/esteban</td>
-<td id="T_afac5_row19_col1" class="data row19 col1">45</td>
-<td id="T_afac5_row19_col2" class="data row19 col2">/blog/2022/your-own-kind-of-map</td>
-<td id="T_afac5_row19_col3" class="data row19 col3">223</td>
-<td id="T_afac5_row19_col4" class="data row19 col4">/blog/2018/the-donald-is-in-love</td>
-<td id="T_afac5_row19_col5" class="data row19 col5">940</td>
+<td id="T_c6360_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">19</td>
+<td id="T_c6360_row19_col0" class="data row19 col0">/features/esteban</td>
+<td id="T_c6360_row19_col1" class="data row19 col1">56</td>
+<td id="T_c6360_row19_col2" class="data row19 col2">/blog/2018/utopia-where-we-find-it</td>
+<td id="T_c6360_row19_col3" class="data row19 col3">288</td>
+<td id="T_c6360_row19_col4" class="data row19 col4">/blog/2018/the-donald-is-in-love</td>
+<td id="T_c6360_row19_col5" class="data row19 col5">1,011</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">20</td>
-<td id="T_afac5_row20_col0" class="data row20 col0">/about/privacy</td>
-<td id="T_afac5_row20_col1" class="data row20 col1">44</td>
-<td id="T_afac5_row20_col2" class="data row20 col2">/blog/2018/utopia-where-we-find-it</td>
-<td id="T_afac5_row20_col3" class="data row20 col3">220</td>
-<td id="T_afac5_row20_col4" class="data row20 col4">/blog/2022/mapping-package-management</td>
-<td id="T_afac5_row20_col5" class="data row20 col5">775</td>
+<td id="T_c6360_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">20</td>
+<td id="T_c6360_row20_col0" class="data row20 col0">/about/privacy</td>
+<td id="T_c6360_row20_col1" class="data row20 col1">54</td>
+<td id="T_c6360_row20_col2" class="data row20 col2">/features/esteban</td>
+<td id="T_c6360_row20_col3" class="data row20 col3">285</td>
+<td id="T_c6360_row20_col4" class="data row20 col4">/blog/2021/lets-try-again</td>
+<td id="T_c6360_row20_col5" class="data row20 col5">850</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row21" class="row_heading level0 row21" data-quarto-table-cell-role="th">21</td>
-<td id="T_afac5_row21_col0" class="data row21 col0">/features/ubu-trump</td>
-<td id="T_afac5_row21_col1" class="data row21 col1">41</td>
-<td id="T_afac5_row21_col2" class="data row21 col2">/features/ubu-trump</td>
-<td id="T_afac5_row21_col3" class="data row21 col3">201</td>
-<td id="T_afac5_row21_col4" class="data row21 col4">/blog/2021/lets-try-again</td>
-<td id="T_afac5_row21_col5" class="data row21 col5">773</td>
+<td id="T_c6360_level0_row21" class="row_heading level0 row21" data-quarto-table-cell-role="th">21</td>
+<td id="T_c6360_row21_col0" class="data row21 col0">/features/ubu-trump</td>
+<td id="T_c6360_row21_col1" class="data row21 col1">47</td>
+<td id="T_c6360_row21_col2" class="data row21 col2">/features/ubu-trump</td>
+<td id="T_c6360_row21_col3" class="data row21 col3">249</td>
+<td id="T_c6360_row21_col4" class="data row21 col4">/blog/2022/mapping-package-management</td>
+<td id="T_c6360_row21_col5" class="data row21 col5">846</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row22" class="row_heading level0 row22" data-quarto-table-cell-role="th">22</td>
-<td id="T_afac5_row22_col0" class="data row22 col0">/features/breath</td>
-<td id="T_afac5_row22_col1" class="data row22 col1">24</td>
-<td id="T_afac5_row22_col2" class="data row22 col2">/features/candy-or-bust</td>
-<td id="T_afac5_row22_col3" class="data row22 col3">125</td>
-<td id="T_afac5_row22_col4" class="data row22 col4">/features/candy-or-bust/voyeur</td>
-<td id="T_afac5_row22_col5" class="data row22 col5">758</td>
+<td id="T_c6360_level0_row22" class="row_heading level0 row22" data-quarto-table-cell-role="th">22</td>
+<td id="T_c6360_row22_col0" class="data row22 col0">/features/do-you-be</td>
+<td id="T_c6360_row22_col1" class="data row22 col1">32</td>
+<td id="T_c6360_row22_col2" class="data row22 col2">/features/candy-or-bust</td>
+<td id="T_c6360_row22_col3" class="data row22 col3">156</td>
+<td id="T_c6360_row22_col4" class="data row22 col4">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_c6360_row22_col5" class="data row22 col5">823</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row23" class="row_heading level0 row23" data-quarto-table-cell-role="th">23</td>
-<td id="T_afac5_row23_col0" class="data row23 col0">/features/do-you-be</td>
-<td id="T_afac5_row23_col1" class="data row23 col1">24</td>
-<td id="T_afac5_row23_col2" class="data row23 col2">/features/breath</td>
-<td id="T_afac5_row23_col3" class="data row23 col3">117</td>
-<td id="T_afac5_row23_col4" class="data row23 col4">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_afac5_row23_col5" class="data row23 col5">738</td>
+<td id="T_c6360_level0_row23" class="row_heading level0 row23" data-quarto-table-cell-role="th">23</td>
+<td id="T_c6360_row23_col0" class="data row23 col0">/features/breath</td>
+<td id="T_c6360_row23_col1" class="data row23 col1">31</td>
+<td id="T_c6360_row23_col2" class="data row23 col2">/features/breath</td>
+<td id="T_c6360_row23_col3" class="data row23 col3">149</td>
+<td id="T_c6360_row23_col4" class="data row23 col4">/blog/2022/your-own-kind-of-map</td>
+<td id="T_c6360_row23_col5" class="data row23 col5">789</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row24" class="row_heading level0 row24" data-quarto-table-cell-role="th">24</td>
-<td id="T_afac5_row24_col0" class="data row24 col0">/features/candy-or-bust</td>
-<td id="T_afac5_row24_col1" class="data row24 col1">23</td>
-<td id="T_afac5_row24_col2" class="data row24 col2">/features/do-you-be</td>
-<td id="T_afac5_row24_col3" class="data row24 col3">111</td>
-<td id="T_afac5_row24_col4" class="data row24 col4">/blog/2022/your-own-kind-of-map</td>
-<td id="T_afac5_row24_col5" class="data row24 col5">718</td>
+<td id="T_c6360_level0_row24" class="row_heading level0 row24" data-quarto-table-cell-role="th">24</td>
+<td id="T_c6360_row24_col0" class="data row24 col0">/features/candy-or-bust</td>
+<td id="T_c6360_row24_col1" class="data row24 col1">29</td>
+<td id="T_c6360_row24_col2" class="data row24 col2">/features/do-you-be</td>
+<td id="T_c6360_row24_col3" class="data row24 col3">144</td>
+<td id="T_c6360_row24_col4" class="data row24 col4">/features/candy-or-bust/voyeur</td>
+<td id="T_c6360_row24_col5" class="data row24 col5">777</td>
 </tr>
 <tr class="even">
-<td id="T_afac5_level0_row25" class="row_heading level0 row25" data-quarto-table-cell-role="th">25</td>
-<td id="T_afac5_row25_col0" class="data row25 col0">/about/robert-grimm/with-halo</td>
-<td id="T_afac5_row25_col1" class="data row25 col1">19</td>
-<td id="T_afac5_row25_col2" class="data row25 col2">/about/robert-grimm/with-halo</td>
-<td id="T_afac5_row25_col3" class="data row25 col3">101</td>
-<td id="T_afac5_row25_col4" class="data row25 col4">/features/breath</td>
-<td id="T_afac5_row25_col5" class="data row25 col5">675</td>
+<td id="T_c6360_level0_row25" class="row_heading level0 row25" data-quarto-table-cell-role="th">25</td>
+<td id="T_c6360_row25_col0" class="data row25 col0">/about/robert-grimm/with-halo</td>
+<td id="T_c6360_row25_col1" class="data row25 col1">26</td>
+<td id="T_c6360_row25_col2" class="data row25 col2">/about/robert-grimm/with-halo</td>
+<td id="T_c6360_row25_col3" class="data row25 col3">128</td>
+<td id="T_c6360_row25_col4" class="data row25 col4">/features/breath</td>
+<td id="T_c6360_row25_col5" class="data row25 col5">707</td>
 </tr>
 <tr class="odd">
-<td id="T_afac5_level0_row26" class="row_heading level0 row26" data-quarto-table-cell-role="th">26</td>
-<td id="T_afac5_row26_col0" class="data row26 col0">/features/candy-or-bust/voyeur</td>
-<td id="T_afac5_row26_col1" class="data row26 col1">17</td>
-<td id="T_afac5_row26_col2" class="data row26 col2">/features/candy-or-bust/voyeur</td>
-<td id="T_afac5_row26_col3" class="data row26 col3">51</td>
-<td id="T_afac5_row26_col4" class="data row26 col4">/blog/2018/we-were-grey</td>
-<td id="T_afac5_row26_col5" class="data row26 col5">444</td>
+<td id="T_c6360_level0_row26" class="row_heading level0 row26" data-quarto-table-cell-role="th">26</td>
+<td id="T_c6360_row26_col0" class="data row26 col0">/features/candy-or-bust/voyeur</td>
+<td id="T_c6360_row26_col1" class="data row26 col1">18</td>
+<td id="T_c6360_row26_col2" class="data row26 col2">/features/candy-or-bust/voyeur</td>
+<td id="T_c6360_row26_col3" class="data row26 col3">70</td>
+<td id="T_c6360_row26_col4" class="data row26 col4">/blog/2018/we-were-grey</td>
+<td id="T_c6360_row26_col5" class="data row26 col5">512</td>
 </tr>
 </tbody>
 </table>
@@ -749,267 +762,267 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_a46f9" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_c0cda" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th colspan="2" id="T_a46f9_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
-<th colspan="2" id="T_a46f9_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">last_year</th>
-<th colspan="2" id="T_a46f9_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">all_time</th>
+<th colspan="2" id="T_c0cda_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
+<th colspan="2" id="T_c0cda_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">last_year</th>
+<th colspan="2" id="T_c0cda_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">all_time</th>
 </tr>
 <tr class="odd">
 <th class="blank level1" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_a46f9_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_a46f9_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
-<th id="T_a46f9_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_a46f9_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">count</th>
-<th id="T_a46f9_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">cool_path</th>
-<th id="T_a46f9_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
+<th id="T_c0cda_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_c0cda_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
+<th id="T_c0cda_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_c0cda_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">count</th>
+<th id="T_c0cda_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">cool_path</th>
+<th id="T_c0cda_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_a46f9_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
-<td id="T_a46f9_row0_col0" class="data row0 col0">/</td>
-<td id="T_a46f9_row0_col1" class="data row0 col1">671</td>
-<td id="T_a46f9_row0_col2" class="data row0 col2">/</td>
-<td id="T_a46f9_row0_col3" class="data row0 col3">2,221</td>
-<td id="T_a46f9_row0_col4" class="data row0 col4">/</td>
-<td id="T_a46f9_row0_col5" class="data row0 col5">27,370</td>
+<td id="T_c0cda_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
+<td id="T_c0cda_row0_col0" class="data row0 col0">/</td>
+<td id="T_c0cda_row0_col1" class="data row0 col1">757</td>
+<td id="T_c0cda_row0_col2" class="data row0 col2">/</td>
+<td id="T_c0cda_row0_col3" class="data row0 col3">2,980</td>
+<td id="T_c0cda_row0_col4" class="data row0 col4">/</td>
+<td id="T_c0cda_row0_col5" class="data row0 col5">28,129</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
-<td id="T_a46f9_row1_col0" class="data row1 col0">/features/ubu-trump</td>
-<td id="T_a46f9_row1_col1" class="data row1 col1">59</td>
-<td id="T_a46f9_row1_col2" class="data row1 col2">/features/ubu-trump</td>
-<td id="T_a46f9_row1_col3" class="data row1 col3">368</td>
-<td id="T_a46f9_row1_col4" class="data row1 col4">/features/ubu-trump</td>
-<td id="T_a46f9_row1_col5" class="data row1 col5">3,644</td>
+<td id="T_c0cda_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
+<td id="T_c0cda_row1_col0" class="data row1 col0">/blog/2019/i-feel-love</td>
+<td id="T_c0cda_row1_col1" class="data row1 col1">81</td>
+<td id="T_c0cda_row1_col2" class="data row1 col2">/blog/2019/i-feel-love</td>
+<td id="T_c0cda_row1_col3" class="data row1 col3">419</td>
+<td id="T_c0cda_row1_col4" class="data row1 col4">/features/ubu-trump</td>
+<td id="T_c0cda_row1_col5" class="data row1 col5">3,690</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
-<td id="T_a46f9_row2_col0" class="data row2 col0">/blog/2022/wrong-impression</td>
-<td id="T_a46f9_row2_col1" class="data row2 col1">59</td>
-<td id="T_a46f9_row2_col2" class="data row2 col2">/blog/2019/i-feel-love</td>
-<td id="T_a46f9_row2_col3" class="data row2 col3">337</td>
-<td id="T_a46f9_row2_col4" class="data row2 col4">/about/privacy</td>
-<td id="T_a46f9_row2_col5" class="data row2 col5">2,474</td>
+<td id="T_c0cda_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
+<td id="T_c0cda_row2_col0" class="data row2 col0">/blog/2022/wrong-impression</td>
+<td id="T_c0cda_row2_col1" class="data row2 col1">74</td>
+<td id="T_c0cda_row2_col2" class="data row2 col2">/features/ubu-trump</td>
+<td id="T_c0cda_row2_col3" class="data row2 col3">414</td>
+<td id="T_c0cda_row2_col4" class="data row2 col4">/about/privacy</td>
+<td id="T_c0cda_row2_col5" class="data row2 col5">2,503</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
-<td id="T_a46f9_row3_col0" class="data row3 col0">/blog/2019/i-feel-love</td>
-<td id="T_a46f9_row3_col1" class="data row3 col1">58</td>
-<td id="T_a46f9_row3_col2" class="data row3 col2">/features/esteban</td>
-<td id="T_a46f9_row3_col3" class="data row3 col3">280</td>
-<td id="T_a46f9_row3_col4" class="data row3 col4">/features/do-you-be</td>
-<td id="T_a46f9_row3_col5" class="data row3 col5">2,429</td>
+<td id="T_c0cda_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
+<td id="T_c0cda_row3_col0" class="data row3 col0">/about/robert-grimm</td>
+<td id="T_c0cda_row3_col1" class="data row3 col1">60</td>
+<td id="T_c0cda_row3_col2" class="data row3 col2">/features/esteban</td>
+<td id="T_c0cda_row3_col3" class="data row3 col3">325</td>
+<td id="T_c0cda_row3_col4" class="data row3 col4">/features/do-you-be</td>
+<td id="T_c0cda_row3_col5" class="data row3 col5">2,463</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
-<td id="T_a46f9_row4_col0" class="data row4 col0">/features/esteban</td>
-<td id="T_a46f9_row4_col1" class="data row4 col1">54</td>
-<td id="T_a46f9_row4_col2" class="data row4 col2">/features/do-you-be</td>
-<td id="T_a46f9_row4_col3" class="data row4 col3">236</td>
-<td id="T_a46f9_row4_col4" class="data row4 col4">/blog/2019/i-feel-love</td>
-<td id="T_a46f9_row4_col5" class="data row4 col5">2,371</td>
+<td id="T_c0cda_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
+<td id="T_c0cda_row4_col0" class="data row4 col0">/features/ubu-trump</td>
+<td id="T_c0cda_row4_col1" class="data row4 col1">46</td>
+<td id="T_c0cda_row4_col2" class="data row4 col2">/blog/2022/wrong-impression</td>
+<td id="T_c0cda_row4_col3" class="data row4 col3">283</td>
+<td id="T_c0cda_row4_col4" class="data row4 col4">/blog/2019/i-feel-love</td>
+<td id="T_c0cda_row4_col5" class="data row4 col5">2,453</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
-<td id="T_a46f9_row5_col0" class="data row5 col0">/about/robert-grimm</td>
-<td id="T_a46f9_row5_col1" class="data row5 col1">46</td>
-<td id="T_a46f9_row5_col2" class="data row5 col2">/about/robert-grimm</td>
-<td id="T_a46f9_row5_col3" class="data row5 col3">213</td>
-<td id="T_a46f9_row5_col4" class="data row5 col4">/about/apparebit</td>
-<td id="T_a46f9_row5_col5" class="data row5 col5">2,311</td>
+<td id="T_c0cda_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
+<td id="T_c0cda_row5_col0" class="data row5 col0">/features/esteban</td>
+<td id="T_c0cda_row5_col1" class="data row5 col1">44</td>
+<td id="T_c0cda_row5_col2" class="data row5 col2">/about/robert-grimm</td>
+<td id="T_c0cda_row5_col3" class="data row5 col3">273</td>
+<td id="T_c0cda_row5_col4" class="data row5 col4">/about/apparebit</td>
+<td id="T_c0cda_row5_col5" class="data row5 col5">2,330</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
-<td id="T_a46f9_row6_col0" class="data row6 col0">/features/do-you-be</td>
-<td id="T_a46f9_row6_col1" class="data row6 col1">41</td>
-<td id="T_a46f9_row6_col2" class="data row6 col2">/blog/2022/wrong-impression</td>
-<td id="T_a46f9_row6_col3" class="data row6 col3">209</td>
-<td id="T_a46f9_row6_col4" class="data row6 col4">/blog</td>
-<td id="T_a46f9_row6_col5" class="data row6 col5">1,970</td>
+<td id="T_c0cda_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
+<td id="T_c0cda_row6_col0" class="data row6 col0">/blog</td>
+<td id="T_c0cda_row6_col1" class="data row6 col1">36</td>
+<td id="T_c0cda_row6_col2" class="data row6 col2">/features/do-you-be</td>
+<td id="T_c0cda_row6_col3" class="data row6 col3">270</td>
+<td id="T_c0cda_row6_col4" class="data row6 col4">/blog</td>
+<td id="T_c0cda_row6_col5" class="data row6 col5">2,006</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
-<td id="T_a46f9_row7_col0" class="data row7 col0">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_a46f9_row7_col1" class="data row7 col1">41</td>
-<td id="T_a46f9_row7_col2" class="data row7 col2">/about/privacy</td>
-<td id="T_a46f9_row7_col3" class="data row7 col3">196</td>
-<td id="T_a46f9_row7_col4" class="data row7 col4">/features/esteban</td>
-<td id="T_a46f9_row7_col5" class="data row7 col5">1,682</td>
+<td id="T_c0cda_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
+<td id="T_c0cda_row7_col0" class="data row7 col0">/blog/2022/mapping-package-management</td>
+<td id="T_c0cda_row7_col1" class="data row7 col1">35</td>
+<td id="T_c0cda_row7_col2" class="data row7 col2">/about/privacy</td>
+<td id="T_c0cda_row7_col3" class="data row7 col3">225</td>
+<td id="T_c0cda_row7_col4" class="data row7 col4">/features/esteban</td>
+<td id="T_c0cda_row7_col5" class="data row7 col5">1,727</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
-<td id="T_a46f9_row8_col0" class="data row8 col0">/blog/2022/zuckerberg-lies</td>
-<td id="T_a46f9_row8_col1" class="data row8 col1">39</td>
-<td id="T_a46f9_row8_col2" class="data row8 col2">/blog/2022/zuckerberg-lies</td>
-<td id="T_a46f9_row8_col3" class="data row8 col3">185</td>
-<td id="T_a46f9_row8_col4" class="data row8 col4">/about/robert-grimm</td>
-<td id="T_a46f9_row8_col5" class="data row8 col5">1,587</td>
+<td id="T_c0cda_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
+<td id="T_c0cda_row8_col0" class="data row8 col0">/blog/2022/zuckerberg-lies</td>
+<td id="T_c0cda_row8_col1" class="data row8 col1">34</td>
+<td id="T_c0cda_row8_col2" class="data row8 col2">/blog/2022/zuckerberg-lies</td>
+<td id="T_c0cda_row8_col3" class="data row8 col3">219</td>
+<td id="T_c0cda_row8_col4" class="data row8 col4">/about/robert-grimm</td>
+<td id="T_c0cda_row8_col5" class="data row8 col5">1,647</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
-<td id="T_a46f9_row9_col0" class="data row9 col0">/about/privacy</td>
-<td id="T_a46f9_row9_col1" class="data row9 col1">38</td>
-<td id="T_a46f9_row9_col2" class="data row9 col2">/blog</td>
-<td id="T_a46f9_row9_col3" class="data row9 col3">179</td>
-<td id="T_a46f9_row9_col4" class="data row9 col4">/features/candy-or-bust</td>
-<td id="T_a46f9_row9_col5" class="data row9 col5">1,478</td>
+<td id="T_c0cda_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
+<td id="T_c0cda_row9_col0" class="data row9 col0">/features/do-you-be</td>
+<td id="T_c0cda_row9_col1" class="data row9 col1">33</td>
+<td id="T_c0cda_row9_col2" class="data row9 col2">/blog</td>
+<td id="T_c0cda_row9_col3" class="data row9 col3">215</td>
+<td id="T_c0cda_row9_col4" class="data row9 col4">/features/candy-or-bust</td>
+<td id="T_c0cda_row9_col5" class="data row9 col5">1,505</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">10</td>
-<td id="T_a46f9_row10_col0" class="data row10 col0">/features/candy-or-bust</td>
-<td id="T_a46f9_row10_col1" class="data row10 col1">37</td>
-<td id="T_a46f9_row10_col2" class="data row10 col2">/features/candy-or-bust</td>
-<td id="T_a46f9_row10_col3" class="data row10 col3">177</td>
-<td id="T_a46f9_row10_col4" class="data row10 col4">/blog/2022/wrong-impression</td>
-<td id="T_a46f9_row10_col5" class="data row10 col5">1,328</td>
+<td id="T_c0cda_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">10</td>
+<td id="T_c0cda_row10_col0" class="data row10 col0">/blog/2022/new-map-layers</td>
+<td id="T_c0cda_row10_col1" class="data row10 col1">30</td>
+<td id="T_c0cda_row10_col2" class="data row10 col2">/features/candy-or-bust</td>
+<td id="T_c0cda_row10_col3" class="data row10 col3">204</td>
+<td id="T_c0cda_row10_col4" class="data row10 col4">/blog/2022/wrong-impression</td>
+<td id="T_c0cda_row10_col5" class="data row10 col5">1,402</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">11</td>
-<td id="T_a46f9_row11_col0" class="data row11 col0">/features/breath</td>
-<td id="T_a46f9_row11_col1" class="data row11 col1">37</td>
-<td id="T_a46f9_row11_col2" class="data row11 col2">/features/breath</td>
-<td id="T_a46f9_row11_col3" class="data row11 col3">177</td>
-<td id="T_a46f9_row11_col4" class="data row11 col4">/features/breath</td>
-<td id="T_a46f9_row11_col5" class="data row11 col5">1,026</td>
+<td id="T_c0cda_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">11</td>
+<td id="T_c0cda_row11_col0" class="data row11 col0">/blog/2023/great-men</td>
+<td id="T_c0cda_row11_col1" class="data row11 col1">29</td>
+<td id="T_c0cda_row11_col2" class="data row11 col2">/features/breath</td>
+<td id="T_c0cda_row11_col3" class="data row11 col3">204</td>
+<td id="T_c0cda_row11_col4" class="data row11 col4">/features/breath</td>
+<td id="T_c0cda_row11_col5" class="data row11 col5">1,053</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">12</td>
-<td id="T_a46f9_row12_col0" class="data row12 col0">/blog/2022/mapping-package-management</td>
-<td id="T_a46f9_row12_col1" class="data row12 col1">35</td>
-<td id="T_a46f9_row12_col2" class="data row12 col2">/blog/2022/mapping-package-management</td>
-<td id="T_a46f9_row12_col3" class="data row12 col3">154</td>
-<td id="T_a46f9_row12_col4" class="data row12 col4">/blog/2022/zuckerberg-lies</td>
-<td id="T_a46f9_row12_col5" class="data row12 col5">1,017</td>
+<td id="T_c0cda_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">12</td>
+<td id="T_c0cda_row12_col0" class="data row12 col0">/about/privacy</td>
+<td id="T_c0cda_row12_col1" class="data row12 col1">29</td>
+<td id="T_c0cda_row12_col2" class="data row12 col2">/blog/2022/mapping-package-management</td>
+<td id="T_c0cda_row12_col3" class="data row12 col3">189</td>
+<td id="T_c0cda_row12_col4" class="data row12 col4">/blog/2022/zuckerberg-lies</td>
+<td id="T_c0cda_row12_col5" class="data row12 col5">1,051</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">13</td>
-<td id="T_a46f9_row13_col0" class="data row13 col0">/blog/2023/great-men</td>
-<td id="T_a46f9_row13_col1" class="data row13 col1">34</td>
-<td id="T_a46f9_row13_col2" class="data row13 col2">/blog/2023/great-men</td>
-<td id="T_a46f9_row13_col3" class="data row13 col3">149</td>
-<td id="T_a46f9_row13_col4" class="data row13 col4">/blog/2023/great-men</td>
-<td id="T_a46f9_row13_col5" class="data row13 col5">836</td>
+<td id="T_c0cda_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">13</td>
+<td id="T_c0cda_row13_col0" class="data row13 col0">/features/breath</td>
+<td id="T_c0cda_row13_col1" class="data row13 col1">27</td>
+<td id="T_c0cda_row13_col2" class="data row13 col2">/blog/2023/great-men</td>
+<td id="T_c0cda_row13_col3" class="data row13 col3">179</td>
+<td id="T_c0cda_row13_col4" class="data row13 col4">/blog/2023/great-men</td>
+<td id="T_c0cda_row13_col5" class="data row13 col5">866</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">14</td>
-<td id="T_a46f9_row14_col0" class="data row14 col0">/blog</td>
-<td id="T_a46f9_row14_col1" class="data row14 col1">34</td>
-<td id="T_a46f9_row14_col2" class="data row14 col2">/blog/2022/new-map-layers</td>
-<td id="T_a46f9_row14_col3" class="data row14 col3">148</td>
-<td id="T_a46f9_row14_col4" class="data row14 col4">/blog/2019/a-frivolous-perspective</td>
-<td id="T_a46f9_row14_col5" class="data row14 col5">774</td>
+<td id="T_c0cda_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">14</td>
+<td id="T_c0cda_row14_col0" class="data row14 col0">/blog/2018/the-donald-is-in-love</td>
+<td id="T_c0cda_row14_col1" class="data row14 col1">27</td>
+<td id="T_c0cda_row14_col2" class="data row14 col2">/blog/2022/new-map-layers</td>
+<td id="T_c0cda_row14_col3" class="data row14 col3">178</td>
+<td id="T_c0cda_row14_col4" class="data row14 col4">/blog/2019/a-frivolous-perspective</td>
+<td id="T_c0cda_row14_col5" class="data row14 col5">786</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">15</td>
-<td id="T_a46f9_row15_col0" class="data row15 col0">/blog/2022/new-map-layers</td>
-<td id="T_a46f9_row15_col1" class="data row15 col1">32</td>
-<td id="T_a46f9_row15_col2" class="data row15 col2">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_a46f9_row15_col3" class="data row15 col3">143</td>
-<td id="T_a46f9_row15_col4" class="data row15 col4">/blog/2022/new-map-layers</td>
-<td id="T_a46f9_row15_col5" class="data row15 col5">706</td>
+<td id="T_c0cda_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">15</td>
+<td id="T_c0cda_row15_col0" class="data row15 col0">/features/candy-or-bust</td>
+<td id="T_c0cda_row15_col1" class="data row15 col1">27</td>
+<td id="T_c0cda_row15_col2" class="data row15 col2">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_c0cda_row15_col3" class="data row15 col3">168</td>
+<td id="T_c0cda_row15_col4" class="data row15 col4">/blog/2022/new-map-layers</td>
+<td id="T_c0cda_row15_col5" class="data row15 col5">736</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">16</td>
-<td id="T_a46f9_row16_col0" class="data row16 col0">/blog/2019/a-frivolous-perspective</td>
-<td id="T_a46f9_row16_col1" class="data row16 col1">30</td>
-<td id="T_a46f9_row16_col2" class="data row16 col2">/blog/2018/the-donald-is-in-love</td>
-<td id="T_a46f9_row16_col3" class="data row16 col3">135</td>
-<td id="T_a46f9_row16_col4" class="data row16 col4">/blog/2018/the-donald-is-in-love</td>
-<td id="T_a46f9_row16_col5" class="data row16 col5">697</td>
+<td id="T_c0cda_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">16</td>
+<td id="T_c0cda_row16_col0" class="data row16 col0">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_c0cda_row16_col1" class="data row16 col1">25</td>
+<td id="T_c0cda_row16_col2" class="data row16 col2">/blog/2018/the-donald-is-in-love</td>
+<td id="T_c0cda_row16_col3" class="data row16 col3">162</td>
+<td id="T_c0cda_row16_col4" class="data row16 col4">/blog/2022/mapping-package-management</td>
+<td id="T_c0cda_row16_col5" class="data row16 col5">731</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">17</td>
-<td id="T_a46f9_row17_col0" class="data row17 col0">/blog/2018/the-donald-is-in-love</td>
-<td id="T_a46f9_row17_col1" class="data row17 col1">30</td>
-<td id="T_a46f9_row17_col2" class="data row17 col2">/about/apparebit</td>
-<td id="T_a46f9_row17_col3" class="data row17 col3">126</td>
-<td id="T_a46f9_row17_col4" class="data row17 col4">/blog/2022/mapping-package-management</td>
-<td id="T_a46f9_row17_col5" class="data row17 col5">696</td>
+<td id="T_c0cda_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">17</td>
+<td id="T_c0cda_row17_col0" class="data row17 col0">/blog/2021/lets-try-again</td>
+<td id="T_c0cda_row17_col1" class="data row17 col1">25</td>
+<td id="T_c0cda_row17_col2" class="data row17 col2">/blog/2022/your-own-kind-of-map</td>
+<td id="T_c0cda_row17_col3" class="data row17 col3">149</td>
+<td id="T_c0cda_row17_col4" class="data row17 col4">/blog/2018/the-donald-is-in-love</td>
+<td id="T_c0cda_row17_col5" class="data row17 col5">724</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">18</td>
-<td id="T_a46f9_row18_col0" class="data row18 col0">/about/apparebit</td>
-<td id="T_a46f9_row18_col1" class="data row18 col1">23</td>
-<td id="T_a46f9_row18_col2" class="data row18 col2">/blog/2022/your-own-kind-of-map</td>
-<td id="T_a46f9_row18_col3" class="data row18 col3">126</td>
-<td id="T_a46f9_row18_col4" class="data row18 col4">/blog/2018/utopia-where-we-find-it</td>
-<td id="T_a46f9_row18_col5" class="data row18 col5">670</td>
+<td id="T_c0cda_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">18</td>
+<td id="T_c0cda_row18_col0" class="data row18 col0">/blog/2022/your-own-kind-of-map</td>
+<td id="T_c0cda_row18_col1" class="data row18 col1">23</td>
+<td id="T_c0cda_row18_col2" class="data row18 col2">/about/apparebit</td>
+<td id="T_c0cda_row18_col3" class="data row18 col3">145</td>
+<td id="T_c0cda_row18_col4" class="data row18 col4">/blog/2018/utopia-where-we-find-it</td>
+<td id="T_c0cda_row18_col5" class="data row18 col5">682</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">19</td>
-<td id="T_a46f9_row19_col0" class="data row19 col0">/blog/2022/your-own-kind-of-map</td>
-<td id="T_a46f9_row19_col1" class="data row19 col1">23</td>
-<td id="T_a46f9_row19_col2" class="data row19 col2">/blog/2019/a-frivolous-perspective</td>
-<td id="T_a46f9_row19_col3" class="data row19 col3">118</td>
-<td id="T_a46f9_row19_col4" class="data row19 col4">/blog/2021/game-of-thrones</td>
-<td id="T_a46f9_row19_col5" class="data row19 col5">659</td>
+<td id="T_c0cda_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">19</td>
+<td id="T_c0cda_row19_col0" class="data row19 col0">/about/apparebit</td>
+<td id="T_c0cda_row19_col1" class="data row19 col1">19</td>
+<td id="T_c0cda_row19_col2" class="data row19 col2">/blog/2021/lets-try-again</td>
+<td id="T_c0cda_row19_col3" class="data row19 col3">137</td>
+<td id="T_c0cda_row19_col4" class="data row19 col4">/blog/2021/game-of-thrones</td>
+<td id="T_c0cda_row19_col5" class="data row19 col5">671</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">20</td>
-<td id="T_a46f9_row20_col0" class="data row20 col0">/blog/2018/utopia-where-we-find-it</td>
-<td id="T_a46f9_row20_col1" class="data row20 col1">21</td>
-<td id="T_a46f9_row20_col2" class="data row20 col2">/blog/2018/utopia-where-we-find-it</td>
-<td id="T_a46f9_row20_col3" class="data row20 col3">112</td>
-<td id="T_a46f9_row20_col4" class="data row20 col4">/blog/2024/netanyahu-plays-goebbels</td>
-<td id="T_a46f9_row20_col5" class="data row20 col5">631</td>
+<td id="T_c0cda_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">20</td>
+<td id="T_c0cda_row20_col0" class="data row20 col0">/blog/2018/we-were-grey</td>
+<td id="T_c0cda_row20_col1" class="data row20 col1">13</td>
+<td id="T_c0cda_row20_col2" class="data row20 col2">/blog/2019/a-frivolous-perspective</td>
+<td id="T_c0cda_row20_col3" class="data row20 col3">130</td>
+<td id="T_c0cda_row20_col4" class="data row20 col4">/blog/2024/netanyahu-plays-goebbels</td>
+<td id="T_c0cda_row20_col5" class="data row20 col5">656</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row21" class="row_heading level0 row21" data-quarto-table-cell-role="th">21</td>
-<td id="T_a46f9_row21_col0" class="data row21 col0">/blog/2021/game-of-thrones</td>
-<td id="T_a46f9_row21_col1" class="data row21 col1">20</td>
-<td id="T_a46f9_row21_col2" class="data row21 col2">/blog/2021/lets-try-again</td>
-<td id="T_a46f9_row21_col3" class="data row21 col3">111</td>
-<td id="T_a46f9_row21_col4" class="data row21 col4">/blog/2022/your-own-kind-of-map</td>
-<td id="T_a46f9_row21_col5" class="data row21 col5">628</td>
+<td id="T_c0cda_level0_row21" class="row_heading level0 row21" data-quarto-table-cell-role="th">21</td>
+<td id="T_c0cda_row21_col0" class="data row21 col0">/blog/2021/game-of-thrones</td>
+<td id="T_c0cda_row21_col1" class="data row21 col1">12</td>
+<td id="T_c0cda_row21_col2" class="data row21 col2">/blog/2018/utopia-where-we-find-it</td>
+<td id="T_c0cda_row21_col3" class="data row21 col3">124</td>
+<td id="T_c0cda_row21_col4" class="data row21 col4">/blog/2022/your-own-kind-of-map</td>
+<td id="T_c0cda_row21_col5" class="data row21 col5">651</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row22" class="row_heading level0 row22" data-quarto-table-cell-role="th">22</td>
-<td id="T_a46f9_row22_col0" class="data row22 col0">/blog/2021/lets-try-again</td>
-<td id="T_a46f9_row22_col1" class="data row22 col1">19</td>
-<td id="T_a46f9_row22_col2" class="data row22 col2">/blog/2021/game-of-thrones</td>
-<td id="T_a46f9_row22_col3" class="data row22 col3">101</td>
-<td id="T_a46f9_row22_col4" class="data row22 col4">/blog/2016/hopelessness</td>
-<td id="T_a46f9_row22_col5" class="data row22 col5">525</td>
+<td id="T_c0cda_level0_row22" class="row_heading level0 row22" data-quarto-table-cell-role="th">22</td>
+<td id="T_c0cda_row22_col0" class="data row22 col0">/blog/2018/utopia-where-we-find-it</td>
+<td id="T_c0cda_row22_col1" class="data row22 col1">12</td>
+<td id="T_c0cda_row22_col2" class="data row22 col2">/blog/2021/game-of-thrones</td>
+<td id="T_c0cda_row22_col3" class="data row22 col3">113</td>
+<td id="T_c0cda_row22_col4" class="data row22 col4">/blog/2021/lets-try-again</td>
+<td id="T_c0cda_row22_col5" class="data row22 col5">543</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row23" class="row_heading level0 row23" data-quarto-table-cell-role="th">23</td>
-<td id="T_a46f9_row23_col0" class="data row23 col0">/blog/2018/we-were-grey</td>
-<td id="T_a46f9_row23_col1" class="data row23 col1">15</td>
-<td id="T_a46f9_row23_col2" class="data row23 col2">/blog/2018/we-were-grey</td>
-<td id="T_a46f9_row23_col3" class="data row23 col3">89</td>
-<td id="T_a46f9_row23_col4" class="data row23 col4">/blog/2021/lets-try-again</td>
-<td id="T_a46f9_row23_col5" class="data row23 col5">517</td>
+<td id="T_c0cda_level0_row23" class="row_heading level0 row23" data-quarto-table-cell-role="th">23</td>
+<td id="T_c0cda_row23_col0" class="data row23 col0">/blog/2019/a-frivolous-perspective</td>
+<td id="T_c0cda_row23_col1" class="data row23 col1">12</td>
+<td id="T_c0cda_row23_col2" class="data row23 col2">/blog/2018/we-were-grey</td>
+<td id="T_c0cda_row23_col3" class="data row23 col3">102</td>
+<td id="T_c0cda_row23_col4" class="data row23 col4">/blog/2016/hopelessness</td>
+<td id="T_c0cda_row23_col5" class="data row23 col5">536</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row24" class="row_heading level0 row24" data-quarto-table-cell-role="th">24</td>
-<td id="T_a46f9_row24_col0" class="data row24 col0">/features/candy-or-bust/voyeur</td>
-<td id="T_a46f9_row24_col1" class="data row24 col1">13</td>
-<td id="T_a46f9_row24_col2" class="data row24 col2">/about/robert-grimm/with-halo</td>
-<td id="T_a46f9_row24_col3" class="data row24 col3">80</td>
-<td id="T_a46f9_row24_col4" class="data row24 col4">/about/robert-grimm/with-halo</td>
-<td id="T_a46f9_row24_col5" class="data row24 col5">414</td>
+<td id="T_c0cda_level0_row24" class="row_heading level0 row24" data-quarto-table-cell-role="th">24</td>
+<td id="T_c0cda_row24_col0" class="data row24 col0">/blog/2016/hopelessness</td>
+<td id="T_c0cda_row24_col1" class="data row24 col1">11</td>
+<td id="T_c0cda_row24_col2" class="data row24 col2">/blog/2016/hopelessness</td>
+<td id="T_c0cda_row24_col3" class="data row24 col3">88</td>
+<td id="T_c0cda_row24_col4" class="data row24 col4">/about/robert-grimm/with-halo</td>
+<td id="T_c0cda_row24_col5" class="data row24 col5">422</td>
 </tr>
 <tr class="even">
-<td id="T_a46f9_level0_row25" class="row_heading level0 row25" data-quarto-table-cell-role="th">25</td>
-<td id="T_a46f9_row25_col0" class="data row25 col0">/blog/2016/hopelessness</td>
-<td id="T_a46f9_row25_col1" class="data row25 col1">13</td>
-<td id="T_a46f9_row25_col2" class="data row25 col2">/blog/2016/hopelessness</td>
-<td id="T_a46f9_row25_col3" class="data row25 col3">77</td>
-<td id="T_a46f9_row25_col4" class="data row25 col4">/features/candy-or-bust/voyeur</td>
-<td id="T_a46f9_row25_col5" class="data row25 col5">387</td>
+<td id="T_c0cda_level0_row25" class="row_heading level0 row25" data-quarto-table-cell-role="th">25</td>
+<td id="T_c0cda_row25_col0" class="data row25 col0">/features/candy-or-bust/voyeur</td>
+<td id="T_c0cda_row25_col1" class="data row25 col1">10</td>
+<td id="T_c0cda_row25_col2" class="data row25 col2">/about/robert-grimm/with-halo</td>
+<td id="T_c0cda_row25_col3" class="data row25 col3">88</td>
+<td id="T_c0cda_row25_col4" class="data row25 col4">/features/candy-or-bust/voyeur</td>
+<td id="T_c0cda_row25_col5" class="data row25 col5">397</td>
 </tr>
 <tr class="odd">
-<td id="T_a46f9_level0_row26" class="row_heading level0 row26" data-quarto-table-cell-role="th">26</td>
-<td id="T_a46f9_row26_col0" class="data row26 col0">/about/robert-grimm/with-halo</td>
-<td id="T_a46f9_row26_col1" class="data row26 col1">12</td>
-<td id="T_a46f9_row26_col2" class="data row26 col2">/features/candy-or-bust/voyeur</td>
-<td id="T_a46f9_row26_col3" class="data row26 col3">66</td>
-<td id="T_a46f9_row26_col4" class="data row26 col4">/blog/2018/we-were-grey</td>
-<td id="T_a46f9_row26_col5" class="data row26 col5">358</td>
+<td id="T_c0cda_level0_row26" class="row_heading level0 row26" data-quarto-table-cell-role="th">26</td>
+<td id="T_c0cda_row26_col0" class="data row26 col0">/about/robert-grimm/with-halo</td>
+<td id="T_c0cda_row26_col1" class="data row26 col1">8</td>
+<td id="T_c0cda_row26_col2" class="data row26 col2">/features/candy-or-bust/voyeur</td>
+<td id="T_c0cda_row26_col3" class="data row26 col3">76</td>
+<td id="T_c0cda_row26_col4" class="data row26 col4">/blog/2018/we-were-grey</td>
+<td id="T_c0cda_row26_col5" class="data row26 col5">371</td>
 </tr>
 </tbody>
 </table>
@@ -1051,123 +1064,123 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_37501" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_834e8" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th colspan="3" id="T_37501_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
-<th colspan="3" id="T_37501_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">last_year</th>
-<th colspan="3" id="T_37501_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">all_time</th>
+<th colspan="3" id="T_834e8_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
+<th colspan="3" id="T_834e8_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">last_year</th>
+<th colspan="3" id="T_834e8_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">all_time</th>
 </tr>
 <tr class="odd">
 <th class="blank level1" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_37501_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">status</th>
-<th id="T_37501_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">phrase</th>
-<th id="T_37501_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">count</th>
-<th id="T_37501_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">status</th>
-<th id="T_37501_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">phrase</th>
-<th id="T_37501_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
-<th id="T_37501_level1_col6" class="col_heading level1 col6" data-quarto-table-cell-role="th">status</th>
-<th id="T_37501_level1_col7" class="col_heading level1 col7" data-quarto-table-cell-role="th">phrase</th>
-<th id="T_37501_level1_col8" class="col_heading level1 col8" data-quarto-table-cell-role="th">count</th>
+<th id="T_834e8_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">status</th>
+<th id="T_834e8_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">phrase</th>
+<th id="T_834e8_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">count</th>
+<th id="T_834e8_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">status</th>
+<th id="T_834e8_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">phrase</th>
+<th id="T_834e8_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
+<th id="T_834e8_level1_col6" class="col_heading level1 col6" data-quarto-table-cell-role="th">status</th>
+<th id="T_834e8_level1_col7" class="col_heading level1 col7" data-quarto-table-cell-role="th">phrase</th>
+<th id="T_834e8_level1_col8" class="col_heading level1 col8" data-quarto-table-cell-role="th">count</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_37501_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
-<td id="T_37501_row0_col0" class="data row0 col0">404</td>
-<td id="T_37501_row0_col1" class="data row0 col1">Not Found</td>
-<td id="T_37501_row0_col2" class="data row0 col2">4,406</td>
-<td id="T_37501_row0_col3" class="data row0 col3">404</td>
-<td id="T_37501_row0_col4" class="data row0 col4">Not Found</td>
-<td id="T_37501_row0_col5" class="data row0 col5">28,489</td>
-<td id="T_37501_row0_col6" class="data row0 col6">404</td>
-<td id="T_37501_row0_col7" class="data row0 col7">Not Found</td>
-<td id="T_37501_row0_col8" class="data row0 col8">131,392</td>
+<td id="T_834e8_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
+<td id="T_834e8_row0_col0" class="data row0 col0">404</td>
+<td id="T_834e8_row0_col1" class="data row0 col1">Not Found</td>
+<td id="T_834e8_row0_col2" class="data row0 col2">3,587</td>
+<td id="T_834e8_row0_col3" class="data row0 col3">404</td>
+<td id="T_834e8_row0_col4" class="data row0 col4">Not Found</td>
+<td id="T_834e8_row0_col5" class="data row0 col5">32,110</td>
+<td id="T_834e8_row0_col6" class="data row0 col6">404</td>
+<td id="T_834e8_row0_col7" class="data row0 col7">Not Found</td>
+<td id="T_834e8_row0_col8" class="data row0 col8">135,013</td>
 </tr>
 <tr class="even">
-<td id="T_37501_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
-<td id="T_37501_row1_col0" class="data row1 col0">406</td>
-<td id="T_37501_row1_col1" class="data row1 col1">Not Acceptable</td>
-<td id="T_37501_row1_col2" class="data row1 col2">1,516</td>
-<td id="T_37501_row1_col3" class="data row1 col3">406</td>
-<td id="T_37501_row1_col4" class="data row1 col4">Not Acceptable</td>
-<td id="T_37501_row1_col5" class="data row1 col5">7,340</td>
-<td id="T_37501_row1_col6" class="data row1 col6">406</td>
-<td id="T_37501_row1_col7" class="data row1 col7">Not Acceptable</td>
-<td id="T_37501_row1_col8" class="data row1 col8">37,089</td>
+<td id="T_834e8_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
+<td id="T_834e8_row1_col0" class="data row1 col0">406</td>
+<td id="T_834e8_row1_col1" class="data row1 col1">Not Acceptable</td>
+<td id="T_834e8_row1_col2" class="data row1 col2">1,071</td>
+<td id="T_834e8_row1_col3" class="data row1 col3">406</td>
+<td id="T_834e8_row1_col4" class="data row1 col4">Not Acceptable</td>
+<td id="T_834e8_row1_col5" class="data row1 col5">8,419</td>
+<td id="T_834e8_row1_col6" class="data row1 col6">406</td>
+<td id="T_834e8_row1_col7" class="data row1 col7">Not Acceptable</td>
+<td id="T_834e8_row1_col8" class="data row1 col8">38,168</td>
 </tr>
 <tr class="odd">
-<td id="T_37501_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
-<td id="T_37501_row2_col0" class="data row2 col0">409</td>
-<td id="T_37501_row2_col1" class="data row2 col1">Conflict</td>
-<td id="T_37501_row2_col2" class="data row2 col2">324</td>
-<td id="T_37501_row2_col3" class="data row2 col3">403</td>
-<td id="T_37501_row2_col4" class="data row2 col4">Forbidden</td>
-<td id="T_37501_row2_col5" class="data row2 col5">966</td>
-<td id="T_37501_row2_col6" class="data row2 col6">403</td>
-<td id="T_37501_row2_col7" class="data row2 col7">Forbidden</td>
-<td id="T_37501_row2_col8" class="data row2 col8">8,531</td>
+<td id="T_834e8_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
+<td id="T_834e8_row2_col0" class="data row2 col0">403</td>
+<td id="T_834e8_row2_col1" class="data row2 col1">Forbidden</td>
+<td id="T_834e8_row2_col2" class="data row2 col2">173</td>
+<td id="T_834e8_row2_col3" class="data row2 col3">403</td>
+<td id="T_834e8_row2_col4" class="data row2 col4">Forbidden</td>
+<td id="T_834e8_row2_col5" class="data row2 col5">1,139</td>
+<td id="T_834e8_row2_col6" class="data row2 col6">403</td>
+<td id="T_834e8_row2_col7" class="data row2 col7">Forbidden</td>
+<td id="T_834e8_row2_col8" class="data row2 col8">8,704</td>
 </tr>
 <tr class="even">
-<td id="T_37501_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
-<td id="T_37501_row3_col0" class="data row3 col0">403</td>
-<td id="T_37501_row3_col1" class="data row3 col1">Forbidden</td>
-<td id="T_37501_row3_col2" class="data row3 col2">298</td>
-<td id="T_37501_row3_col3" class="data row3 col3">409</td>
-<td id="T_37501_row3_col4" class="data row3 col4">Conflict</td>
-<td id="T_37501_row3_col5" class="data row3 col5">876</td>
-<td id="T_37501_row3_col6" class="data row3 col6">409</td>
-<td id="T_37501_row3_col7" class="data row3 col7">Conflict</td>
-<td id="T_37501_row3_col8" class="data row3 col8">3,896</td>
+<td id="T_834e8_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
+<td id="T_834e8_row3_col0" class="data row3 col0">409</td>
+<td id="T_834e8_row3_col1" class="data row3 col1">Conflict</td>
+<td id="T_834e8_row3_col2" class="data row3 col2">108</td>
+<td id="T_834e8_row3_col3" class="data row3 col3">409</td>
+<td id="T_834e8_row3_col4" class="data row3 col4">Conflict</td>
+<td id="T_834e8_row3_col5" class="data row3 col5">986</td>
+<td id="T_834e8_row3_col6" class="data row3 col6">409</td>
+<td id="T_834e8_row3_col7" class="data row3 col7">Conflict</td>
+<td id="T_834e8_row3_col8" class="data row3 col8">4,006</td>
 </tr>
 <tr class="odd">
-<td id="T_37501_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
-<td id="T_37501_row4_col0" class="data row4 col0">421</td>
-<td id="T_37501_row4_col1" class="data row4 col1">Misdirected Request</td>
-<td id="T_37501_row4_col2" class="data row4 col2">2</td>
-<td id="T_37501_row4_col3" class="data row4 col3">421</td>
-<td id="T_37501_row4_col4" class="data row4 col4">Misdirected Request</td>
-<td id="T_37501_row4_col5" class="data row4 col5">10</td>
-<td id="T_37501_row4_col6" class="data row4 col6">400</td>
-<td id="T_37501_row4_col7" class="data row4 col7">Bad Request</td>
-<td id="T_37501_row4_col8" class="data row4 col8">1,291</td>
+<td id="T_834e8_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
+<td id="T_834e8_row4_col0" class="data row4 col0">421</td>
+<td id="T_834e8_row4_col1" class="data row4 col1">Misdirected Request</td>
+<td id="T_834e8_row4_col2" class="data row4 col2">3</td>
+<td id="T_834e8_row4_col3" class="data row4 col3">421</td>
+<td id="T_834e8_row4_col4" class="data row4 col4">Misdirected Request</td>
+<td id="T_834e8_row4_col5" class="data row4 col5">13</td>
+<td id="T_834e8_row4_col6" class="data row4 col6">400</td>
+<td id="T_834e8_row4_col7" class="data row4 col7">Bad Request</td>
+<td id="T_834e8_row4_col8" class="data row4 col8">1,291</td>
 </tr>
 <tr class="even">
-<td id="T_37501_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
-<td id="T_37501_row5_col0" class="data row5 col0"></td>
-<td id="T_37501_row5_col1" class="data row5 col1"></td>
-<td id="T_37501_row5_col2" class="data row5 col2"></td>
-<td id="T_37501_row5_col3" class="data row5 col3"></td>
-<td id="T_37501_row5_col4" class="data row5 col4"></td>
-<td id="T_37501_row5_col5" class="data row5 col5"></td>
-<td id="T_37501_row5_col6" class="data row5 col6">401</td>
-<td id="T_37501_row5_col7" class="data row5 col7">Unauthorized</td>
-<td id="T_37501_row5_col8" class="data row5 col8">866</td>
+<td id="T_834e8_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
+<td id="T_834e8_row5_col0" class="data row5 col0"></td>
+<td id="T_834e8_row5_col1" class="data row5 col1"></td>
+<td id="T_834e8_row5_col2" class="data row5 col2"></td>
+<td id="T_834e8_row5_col3" class="data row5 col3"></td>
+<td id="T_834e8_row5_col4" class="data row5 col4"></td>
+<td id="T_834e8_row5_col5" class="data row5 col5"></td>
+<td id="T_834e8_row5_col6" class="data row5 col6">401</td>
+<td id="T_834e8_row5_col7" class="data row5 col7">Unauthorized</td>
+<td id="T_834e8_row5_col8" class="data row5 col8">866</td>
 </tr>
 <tr class="odd">
-<td id="T_37501_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
-<td id="T_37501_row6_col0" class="data row6 col0"></td>
-<td id="T_37501_row6_col1" class="data row6 col1"></td>
-<td id="T_37501_row6_col2" class="data row6 col2"></td>
-<td id="T_37501_row6_col3" class="data row6 col3"></td>
-<td id="T_37501_row6_col4" class="data row6 col4"></td>
-<td id="T_37501_row6_col5" class="data row6 col5"></td>
-<td id="T_37501_row6_col6" class="data row6 col6">421</td>
-<td id="T_37501_row6_col7" class="data row6 col7">Misdirected Request</td>
-<td id="T_37501_row6_col8" class="data row6 col8">399</td>
+<td id="T_834e8_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
+<td id="T_834e8_row6_col0" class="data row6 col0"></td>
+<td id="T_834e8_row6_col1" class="data row6 col1"></td>
+<td id="T_834e8_row6_col2" class="data row6 col2"></td>
+<td id="T_834e8_row6_col3" class="data row6 col3"></td>
+<td id="T_834e8_row6_col4" class="data row6 col4"></td>
+<td id="T_834e8_row6_col5" class="data row6 col5"></td>
+<td id="T_834e8_row6_col6" class="data row6 col6">421</td>
+<td id="T_834e8_row6_col7" class="data row6 col7">Misdirected Request</td>
+<td id="T_834e8_row6_col8" class="data row6 col8">402</td>
 </tr>
 <tr class="even">
-<td id="T_37501_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
-<td id="T_37501_row7_col0" class="data row7 col0"></td>
-<td id="T_37501_row7_col1" class="data row7 col1"></td>
-<td id="T_37501_row7_col2" class="data row7 col2"></td>
-<td id="T_37501_row7_col3" class="data row7 col3"></td>
-<td id="T_37501_row7_col4" class="data row7 col4"></td>
-<td id="T_37501_row7_col5" class="data row7 col5"></td>
-<td id="T_37501_row7_col6" class="data row7 col6">405</td>
-<td id="T_37501_row7_col7" class="data row7 col7">Method Not Allowed</td>
-<td id="T_37501_row7_col8" class="data row7 col8">5</td>
+<td id="T_834e8_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
+<td id="T_834e8_row7_col0" class="data row7 col0"></td>
+<td id="T_834e8_row7_col1" class="data row7 col1"></td>
+<td id="T_834e8_row7_col2" class="data row7 col2"></td>
+<td id="T_834e8_row7_col3" class="data row7 col3"></td>
+<td id="T_834e8_row7_col4" class="data row7 col4"></td>
+<td id="T_834e8_row7_col5" class="data row7 col5"></td>
+<td id="T_834e8_row7_col6" class="data row7 col6">405</td>
+<td id="T_834e8_row7_col7" class="data row7 col7">Method Not Allowed</td>
+<td id="T_834e8_row7_col8" class="data row7 col8">5</td>
 </tr>
 </tbody>
 </table>
@@ -1176,204 +1189,204 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <style type="text/css">
 </style>
 
-<table id="T_c03bd" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_10bd7" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th colspan="2" id="T_c03bd_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
-<th colspan="2" id="T_c03bd_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">last_year</th>
-<th colspan="2" id="T_c03bd_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">all_time</th>
+<th colspan="2" id="T_10bd7_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">last_month</th>
+<th colspan="2" id="T_10bd7_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">last_year</th>
+<th colspan="2" id="T_10bd7_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">all_time</th>
 </tr>
 <tr class="odd">
 <th class="blank level1" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_c03bd_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">path</th>
-<th id="T_c03bd_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
-<th id="T_c03bd_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">path</th>
-<th id="T_c03bd_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">count</th>
-<th id="T_c03bd_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">path</th>
-<th id="T_c03bd_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
+<th id="T_10bd7_level1_col0" class="col_heading level1 col0" data-quarto-table-cell-role="th">path</th>
+<th id="T_10bd7_level1_col1" class="col_heading level1 col1" data-quarto-table-cell-role="th">count</th>
+<th id="T_10bd7_level1_col2" class="col_heading level1 col2" data-quarto-table-cell-role="th">path</th>
+<th id="T_10bd7_level1_col3" class="col_heading level1 col3" data-quarto-table-cell-role="th">count</th>
+<th id="T_10bd7_level1_col4" class="col_heading level1 col4" data-quarto-table-cell-role="th">path</th>
+<th id="T_10bd7_level1_col5" class="col_heading level1 col5" data-quarto-table-cell-role="th">count</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_c03bd_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
-<td id="T_c03bd_row0_col0" class="data row0 col0">/wordpress</td>
-<td id="T_c03bd_row0_col1" class="data row0 col1">87</td>
-<td id="T_c03bd_row0_col2" class="data row0 col2">/blog/2019/i-feel-love</td>
-<td id="T_c03bd_row0_col3" class="data row0 col3">1,700</td>
-<td id="T_c03bd_row0_col4" class="data row0 col4">/blog/2019/i-feel-love</td>
-<td id="T_c03bd_row0_col5" class="data row0 col5">6,694</td>
+<td id="T_10bd7_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">0</td>
+<td id="T_10bd7_row0_col0" class="data row0 col0">/favicon.ico</td>
+<td id="T_10bd7_row0_col1" class="data row0 col1">80</td>
+<td id="T_10bd7_row0_col2" class="data row0 col2">/blog/2019/i-feel-love</td>
+<td id="T_10bd7_row0_col3" class="data row0 col3">1,754</td>
+<td id="T_10bd7_row0_col4" class="data row0 col4">/blog/2019/i-feel-love</td>
+<td id="T_10bd7_row0_col5" class="data row0 col5">6,748</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
-<td id="T_c03bd_row1_col0" class="data row1 col0">/wp</td>
-<td id="T_c03bd_row1_col1" class="data row1 col1">86</td>
-<td id="T_c03bd_row1_col2" class="data row1 col2">/favicon.ico</td>
-<td id="T_c03bd_row1_col3" class="data row1 col3">1,003</td>
-<td id="T_c03bd_row1_col4" class="data row1 col4">/favicon.ico</td>
-<td id="T_c03bd_row1_col5" class="data row1 col5">2,803</td>
+<td id="T_10bd7_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">1</td>
+<td id="T_10bd7_row1_col0" class="data row1 col0">/wordpress</td>
+<td id="T_10bd7_row1_col1" class="data row1 col1">72</td>
+<td id="T_10bd7_row1_col2" class="data row1 col2">/favicon.ico</td>
+<td id="T_10bd7_row1_col3" class="data row1 col3">1,083</td>
+<td id="T_10bd7_row1_col4" class="data row1 col4">/favicon.ico</td>
+<td id="T_10bd7_row1_col5" class="data row1 col5">2,883</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
-<td id="T_c03bd_row2_col0" class="data row2 col0">/new</td>
-<td id="T_c03bd_row2_col1" class="data row2 col1">85</td>
-<td id="T_c03bd_row2_col2" class="data row2 col2">/wordpress</td>
-<td id="T_c03bd_row2_col3" class="data row2 col3">456</td>
-<td id="T_c03bd_row2_col4" class="data row2 col4">/</td>
-<td id="T_c03bd_row2_col5" class="data row2 col5">2,229</td>
+<td id="T_10bd7_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2</td>
+<td id="T_10bd7_row2_col0" class="data row2 col0">/backup</td>
+<td id="T_10bd7_row2_col1" class="data row2 col1">72</td>
+<td id="T_10bd7_row2_col2" class="data row2 col2">/wordpress</td>
+<td id="T_10bd7_row2_col3" class="data row2 col3">528</td>
+<td id="T_10bd7_row2_col4" class="data row2 col4">/</td>
+<td id="T_10bd7_row2_col5" class="data row2 col5">2,247</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
-<td id="T_c03bd_row3_col0" class="data row3 col0">/old</td>
-<td id="T_c03bd_row3_col1" class="data row3 col1">84</td>
-<td id="T_c03bd_row3_col2" class="data row3 col2">/wp</td>
-<td id="T_c03bd_row3_col3" class="data row3 col3">453</td>
-<td id="T_c03bd_row3_col4" class="data row3 col4">/wp-login.php</td>
-<td id="T_c03bd_row3_col5" class="data row3 col5">1,848</td>
+<td id="T_10bd7_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">3</td>
+<td id="T_10bd7_row3_col0" class="data row3 col0">/old</td>
+<td id="T_10bd7_row3_col1" class="data row3 col1">71</td>
+<td id="T_10bd7_row3_col2" class="data row3 col2">/wp</td>
+<td id="T_10bd7_row3_col3" class="data row3 col3">524</td>
+<td id="T_10bd7_row3_col4" class="data row3 col4">/wp-login.php</td>
+<td id="T_10bd7_row3_col5" class="data row3 col5">1,886</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
-<td id="T_c03bd_row4_col0" class="data row4 col0">/main</td>
-<td id="T_c03bd_row4_col1" class="data row4 col1">84</td>
-<td id="T_c03bd_row4_col2" class="data row4 col2">/backup</td>
-<td id="T_c03bd_row4_col3" class="data row4 col3">450</td>
-<td id="T_c03bd_row4_col4" class="data row4 col4">//wp/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row4_col5" class="data row4 col5">1,777</td>
+<td id="T_10bd7_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">4</td>
+<td id="T_10bd7_row4_col0" class="data row4 col0">/wp</td>
+<td id="T_10bd7_row4_col1" class="data row4 col1">71</td>
+<td id="T_10bd7_row4_col2" class="data row4 col2">/backup</td>
+<td id="T_10bd7_row4_col3" class="data row4 col3">522</td>
+<td id="T_10bd7_row4_col4" class="data row4 col4">//wp/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row4_col5" class="data row4 col5">1,813</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
-<td id="T_c03bd_row5_col0" class="data row5 col0">/backup</td>
-<td id="T_c03bd_row5_col1" class="data row5 col1">82</td>
-<td id="T_c03bd_row5_col2" class="data row5 col2">/new</td>
-<td id="T_c03bd_row5_col3" class="data row5 col3">444</td>
-<td id="T_c03bd_row5_col4" class="data row5 col4">//wordpress/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row5_col5" class="data row5 col5">1,752</td>
+<td id="T_10bd7_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">5</td>
+<td id="T_10bd7_row5_col0" class="data row5 col0">/new</td>
+<td id="T_10bd7_row5_col1" class="data row5 col1">70</td>
+<td id="T_10bd7_row5_col2" class="data row5 col2">/old</td>
+<td id="T_10bd7_row5_col3" class="data row5 col3">514</td>
+<td id="T_10bd7_row5_col4" class="data row5 col4">//wordpress/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row5_col5" class="data row5 col5">1,795</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
-<td id="T_c03bd_row6_col0" class="data row6 col0">/home</td>
-<td id="T_c03bd_row6_col1" class="data row6 col1">80</td>
-<td id="T_c03bd_row6_col2" class="data row6 col2">/old</td>
-<td id="T_c03bd_row6_col3" class="data row6 col3">443</td>
-<td id="T_c03bd_row6_col4" class="data row6 col4">//cms/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row6_col5" class="data row6 col5">1,750</td>
+<td id="T_10bd7_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">6</td>
+<td id="T_10bd7_row6_col0" class="data row6 col0">/main</td>
+<td id="T_10bd7_row6_col1" class="data row6 col1">69</td>
+<td id="T_10bd7_row6_col2" class="data row6 col2">/new</td>
+<td id="T_10bd7_row6_col3" class="data row6 col3">514</td>
+<td id="T_10bd7_row6_col4" class="data row6 col4">//test/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row6_col5" class="data row6 col5">1,783</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
-<td id="T_c03bd_row7_col0" class="data row7 col0">/blog/2019/i-feel-love</td>
-<td id="T_c03bd_row7_col1" class="data row7 col1">80</td>
-<td id="T_c03bd_row7_col2" class="data row7 col2">/main</td>
-<td id="T_c03bd_row7_col3" class="data row7 col3">434</td>
-<td id="T_c03bd_row7_col4" class="data row7 col4">//test/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row7_col5" class="data row7 col5">1,749</td>
+<td id="T_10bd7_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">7</td>
+<td id="T_10bd7_row7_col0" class="data row7 col0">/home</td>
+<td id="T_10bd7_row7_col1" class="data row7 col1">68</td>
+<td id="T_10bd7_row7_col2" class="data row7 col2">/main</td>
+<td id="T_10bd7_row7_col3" class="data row7 col3">503</td>
+<td id="T_10bd7_row7_col4" class="data row7 col4">//cms/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row7_col5" class="data row7 col5">1,782</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
-<td id="T_c03bd_row8_col0" class="data row8 col0">/bc</td>
-<td id="T_c03bd_row8_col1" class="data row8 col1">78</td>
-<td id="T_c03bd_row8_col2" class="data row8 col2">/home</td>
-<td id="T_c03bd_row8_col3" class="data row8 col3">427</td>
-<td id="T_c03bd_row8_col4" class="data row8 col4">//site/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row8_col5" class="data row8 col5">1,721</td>
+<td id="T_10bd7_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">8</td>
+<td id="T_10bd7_row8_col0" class="data row8 col0">/bk</td>
+<td id="T_10bd7_row8_col1" class="data row8 col1">68</td>
+<td id="T_10bd7_row8_col2" class="data row8 col2">/home</td>
+<td id="T_10bd7_row8_col3" class="data row8 col3">495</td>
+<td id="T_10bd7_row8_col4" class="data row8 col4">//site/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row8_col5" class="data row8 col5">1,759</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
-<td id="T_c03bd_row9_col0" class="data row9 col0">/assets/fonts/bely-regular.woff2</td>
-<td id="T_c03bd_row9_col1" class="data row9 col1">78</td>
-<td id="T_c03bd_row9_col2" class="data row9 col2">/bc</td>
-<td id="T_c03bd_row9_col3" class="data row9 col3">425</td>
-<td id="T_c03bd_row9_col4" class="data row9 col4">//xmlrpc.php</td>
-<td id="T_c03bd_row9_col5" class="data row9 col5">1,714</td>
+<td id="T_10bd7_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">9</td>
+<td id="T_10bd7_row9_col0" class="data row9 col0">/bc</td>
+<td id="T_10bd7_row9_col1" class="data row9 col1">68</td>
+<td id="T_10bd7_row9_col2" class="data row9 col2">/bc</td>
+<td id="T_10bd7_row9_col3" class="data row9 col3">493</td>
+<td id="T_10bd7_row9_col4" class="data row9 col4">//xmlrpc.php</td>
+<td id="T_10bd7_row9_col5" class="data row9 col5">1,740</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">10</td>
-<td id="T_c03bd_row10_col0" class="data row10 col0">/bk</td>
-<td id="T_c03bd_row10_col1" class="data row10 col1">77</td>
-<td id="T_c03bd_row10_col2" class="data row10 col2">/bk</td>
-<td id="T_c03bd_row10_col3" class="data row10 col3">424</td>
-<td id="T_c03bd_row10_col4" class="data row10 col4">//wp1/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row10_col5" class="data row10 col5">1,693</td>
+<td id="T_10bd7_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">10</td>
+<td id="T_10bd7_row10_col0" class="data row10 col0">/assets/fonts/bely-regular.woff2</td>
+<td id="T_10bd7_row10_col1" class="data row10 col1">67</td>
+<td id="T_10bd7_row10_col2" class="data row10 col2">/bk</td>
+<td id="T_10bd7_row10_col3" class="data row10 col3">492</td>
+<td id="T_10bd7_row10_col4" class="data row10 col4">//wp1/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row10_col5" class="data row10 col5">1,730</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">11</td>
-<td id="T_c03bd_row11_col0" class="data row11 col0">/.well-known</td>
-<td id="T_c03bd_row11_col1" class="data row11 col1">65</td>
-<td id="T_c03bd_row11_col2" class="data row11 col2">/assets/fonts/bely-regular.woff2</td>
-<td id="T_c03bd_row11_col3" class="data row11 col3">239</td>
-<td id="T_c03bd_row11_col4" class="data row11 col4">//shop/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row11_col5" class="data row11 col5">1,684</td>
+<td id="T_10bd7_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">11</td>
+<td id="T_10bd7_row11_col0" class="data row11 col0">/blog/2019/i-feel-love</td>
+<td id="T_10bd7_row11_col1" class="data row11 col1">53</td>
+<td id="T_10bd7_row11_col2" class="data row11 col2">/assets/fonts/bely-regular.woff2</td>
+<td id="T_10bd7_row11_col3" class="data row11 col3">306</td>
+<td id="T_10bd7_row11_col4" class="data row11 col4">//shop/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row11_col5" class="data row11 col5">1,712</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">12</td>
-<td id="T_c03bd_row12_col0" class="data row12 col0">//blog/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row12_col1" class="data row12 col1">60</td>
-<td id="T_c03bd_row12_col2" class="data row12 col2">/.well-known</td>
-<td id="T_c03bd_row12_col3" class="data row12 col3">218</td>
-<td id="T_c03bd_row12_col4" class="data row12 col4">//web/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row12_col5" class="data row12 col5">1,638</td>
+<td id="T_10bd7_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">12</td>
+<td id="T_10bd7_row12_col0" class="data row12 col0">//blog/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row12_col1" class="data row12 col1">47</td>
+<td id="T_10bd7_row12_col2" class="data row12 col2">/.well-known</td>
+<td id="T_10bd7_row12_col3" class="data row12 col3">260</td>
+<td id="T_10bd7_row12_col4" class="data row12 col4">//blog/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row12_col5" class="data row12 col5">1,668</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">13</td>
-<td id="T_c03bd_row13_col0" class="data row13 col0">/wp-admin/css</td>
-<td id="T_c03bd_row13_col1" class="data row13 col1">58</td>
-<td id="T_c03bd_row13_col2" class="data row13 col2">/wp-admin/css</td>
-<td id="T_c03bd_row13_col3" class="data row13 col3">196</td>
-<td id="T_c03bd_row13_col4" class="data row13 col4">//2019/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row13_col5" class="data row13 col5">1,632</td>
+<td id="T_10bd7_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">13</td>
+<td id="T_10bd7_row13_col0" class="data row13 col0">//wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row13_col1" class="data row13 col1">45</td>
+<td id="T_10bd7_row13_col2" class="data row13 col2">/wp-admin/css</td>
+<td id="T_10bd7_row13_col3" class="data row13 col3">229</td>
+<td id="T_10bd7_row13_col4" class="data row13 col4">//2019/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row13_col5" class="data row13 col5">1,667</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">14</td>
-<td id="T_c03bd_row14_col0" class="data row14 col0">//wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row14_col1" class="data row14 col1">55</td>
-<td id="T_c03bd_row14_col2" class="data row14 col2">//blog/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row14_col3" class="data row14 col3">179</td>
-<td id="T_c03bd_row14_col4" class="data row14 col4">//blog/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row14_col5" class="data row14 col5">1,620</td>
+<td id="T_10bd7_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">14</td>
+<td id="T_10bd7_row14_col0" class="data row14 col0">//wordpress/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row14_col1" class="data row14 col1">43</td>
+<td id="T_10bd7_row14_col2" class="data row14 col2">//blog/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row14_col3" class="data row14 col3">227</td>
+<td id="T_10bd7_row14_col4" class="data row14 col4">//web/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row14_col5" class="data row14 col5">1,660</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">15</td>
-<td id="T_c03bd_row15_col0" class="data row15 col0">//wp/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row15_col1" class="data row15 col1">55</td>
-<td id="T_c03bd_row15_col2" class="data row15 col2">//wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row15_col3" class="data row15 col3">168</td>
-<td id="T_c03bd_row15_col4" class="data row15 col4">//wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row15_col5" class="data row15 col5">1,579</td>
+<td id="T_10bd7_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">15</td>
+<td id="T_10bd7_row15_col0" class="data row15 col0">/.well-known</td>
+<td id="T_10bd7_row15_col1" class="data row15 col1">42</td>
+<td id="T_10bd7_row15_col2" class="data row15 col2">//wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row15_col3" class="data row15 col3">214</td>
+<td id="T_10bd7_row15_col4" class="data row15 col4">//wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row15_col5" class="data row15 col5">1,625</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">16</td>
-<td id="T_c03bd_row16_col0" class="data row16 col0">//test/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row16_col1" class="data row16 col1">51</td>
-<td id="T_c03bd_row16_col2" class="data row16 col2">//wp/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row16_col3" class="data row16 col3">165</td>
-<td id="T_c03bd_row16_col4" class="data row16 col4">/ads.txt</td>
-<td id="T_c03bd_row16_col5" class="data row16 col5">1,554</td>
+<td id="T_10bd7_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">16</td>
+<td id="T_10bd7_row16_col0" class="data row16 col0">/wp-login.php</td>
+<td id="T_10bd7_row16_col1" class="data row16 col1">38</td>
+<td id="T_10bd7_row16_col2" class="data row16 col2">//wp/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row16_col3" class="data row16 col3">201</td>
+<td id="T_10bd7_row16_col4" class="data row16 col4">/ads.txt</td>
+<td id="T_10bd7_row16_col5" class="data row16 col5">1,562</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">17</td>
-<td id="T_c03bd_row17_col0" class="data row17 col0">//wordpress/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row17_col1" class="data row17 col1">49</td>
-<td id="T_c03bd_row17_col2" class="data row17 col2">/wp-login.php</td>
-<td id="T_c03bd_row17_col3" class="data row17 col3">161</td>
-<td id="T_c03bd_row17_col4" class="data row17 col4">/assets/fonts/bely-regular.woff2</td>
-<td id="T_c03bd_row17_col5" class="data row17 col5">1,418</td>
+<td id="T_10bd7_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">17</td>
+<td id="T_10bd7_row17_col0" class="data row17 col0">//site/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row17_col1" class="data row17 col1">37</td>
+<td id="T_10bd7_row17_col2" class="data row17 col2">/wp-login.php</td>
+<td id="T_10bd7_row17_col3" class="data row17 col3">199</td>
+<td id="T_10bd7_row17_col4" class="data row17 col4">/assets/fonts/bely-regular.woff2</td>
+<td id="T_10bd7_row17_col5" class="data row17 col5">1,485</td>
 </tr>
 <tr class="odd">
-<td id="T_c03bd_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">18</td>
-<td id="T_c03bd_row18_col0" class="data row18 col0">//cms/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row18_col1" class="data row18 col1">46</td>
-<td id="T_c03bd_row18_col2" class="data row18 col2">//test/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row18_col3" class="data row18 col3">161</td>
-<td id="T_c03bd_row18_col4" class="data row18 col4">//wp2/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row18_col5" class="data row18 col5">1,413</td>
+<td id="T_10bd7_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">18</td>
+<td id="T_10bd7_row18_col0" class="data row18 col0">//wp1/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row18_col1" class="data row18 col1">37</td>
+<td id="T_10bd7_row18_col2" class="data row18 col2">//wordpress/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row18_col3" class="data row18 col3">198</td>
+<td id="T_10bd7_row18_col4" class="data row18 col4">//wp2/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row18_col5" class="data row18 col5">1,441</td>
 </tr>
 <tr class="even">
-<td id="T_c03bd_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">19</td>
-<td id="T_c03bd_row19_col0" class="data row19 col0">//shop/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row19_col1" class="data row19 col1">46</td>
-<td id="T_c03bd_row19_col2" class="data row19 col2">//wordpress/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row19_col3" class="data row19 col3">155</td>
-<td id="T_c03bd_row19_col4" class="data row19 col4">//sito/wp-includes/wlwmanifest.xml</td>
-<td id="T_c03bd_row19_col5" class="data row19 col5">1,412</td>
+<td id="T_10bd7_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">19</td>
+<td id="T_10bd7_row19_col0" class="data row19 col0">//wp/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row19_col1" class="data row19 col1">35</td>
+<td id="T_10bd7_row19_col2" class="data row19 col2">//test/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row19_col3" class="data row19 col3">195</td>
+<td id="T_10bd7_row19_col4" class="data row19 col4">//sito/wp-includes/wlwmanifest.xml</td>
+<td id="T_10bd7_row19_col5" class="data row19 col5">1,438</td>
 </tr>
 </tbody>
 </table>
@@ -1415,18 +1428,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co"># df["client_city"].drop_duplicates()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
-<hr><h2 class="anchored">8. I Feel Love</h2><ul><li>There were 238,365 requests for the page.</li><li>231,805 (97.2%) requests were successful.</li><li>5,797 clients issued 41.1 requests each (on average).</li><li>16,684 (7.0%) requests have a referrer.</li></ul>
+<hr><h2 class="anchored">8. I Feel Love</h2><ul><li>There were 240,180 requests for the page.</li><li>233,611 (97.3%) requests were successful.</li><li>6,008 clients issued 40.0 requests each (on average).</li><li>18,280 (7.6%) requests have a referrer.</li></ul>
 <br><br><h3 class="anchored">Top 30 Referrers</h3>
 </div>
 <div class="cell-output cell-output-display">
 <style type="text/css">
 </style>
 
-<table id="T_81703" data-quarto-postprocess="true" class="table table-sm table-striped small">
+<table id="T_4343b" data-quarto-postprocess="true" class="table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_81703_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">count</th>
+<th id="T_4343b_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">count</th>
 </tr>
 <tr class="odd">
 <th class="index_name level0" data-quarto-table-cell-role="th">referrer</th>
@@ -1435,124 +1448,124 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_81703_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">http://obscenely.gay</td>
-<td id="T_81703_row0_col0" class="data row0 col0">1,404</td>
+<td id="T_4343b_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">http://obscenely.gay</td>
+<td id="T_4343b_row0_col0" class="data row0 col0">1,405</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">http://www.obscenely.gay</td>
-<td id="T_81703_row1_col0" class="data row1 col0">1,045</td>
+<td id="T_4343b_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">http://www.obscenely.gay</td>
+<td id="T_4343b_row1_col0" class="data row1 col0">1,045</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">http://obscenely.gay/wp-login.php</td>
-<td id="T_81703_row2_col0" class="data row2 col0">498</td>
+<td id="T_4343b_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">www.google.com</td>
+<td id="T_4343b_row2_col0" class="data row2 col0">511</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">www.google.com</td>
-<td id="T_81703_row3_col0" class="data row3 col0">490</td>
+<td id="T_4343b_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">http://obscenely.gay/wp-login.php</td>
+<td id="T_4343b_row3_col0" class="data row3 col0">498</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">http://www.google.com/url?url=apparebit.com&amp;yahoo.com</td>
-<td id="T_81703_row4_col0" class="data row4 col0">348</td>
+<td id="T_4343b_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">https://obscenely.gay/</td>
+<td id="T_4343b_row4_col0" class="data row4 col0">492</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">http://obscenely.gay/</td>
-<td id="T_81703_row5_col0" class="data row5 col0">333</td>
+<td id="T_4343b_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">https://apparebit.com/blog/2019/i-feel-love</td>
+<td id="T_4343b_row5_col0" class="data row5 col0">397</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">http://google.com/</td>
-<td id="T_81703_row6_col0" class="data row6 col0">317</td>
+<td id="T_4343b_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">https://www.obscenely.gay/</td>
+<td id="T_4343b_row6_col0" class="data row6 col0">383</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">https://apparebit.com/blog/2019/i-feel-love</td>
-<td id="T_81703_row7_col0" class="data row7 col0">300</td>
+<td id="T_4343b_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">http://www.google.com/url?url=apparebit.com&amp;yahoo.com</td>
+<td id="T_4343b_row7_col0" class="data row7 col0">351</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">https://obscenely.gay/</td>
-<td id="T_81703_row8_col0" class="data row8 col0">291</td>
+<td id="T_4343b_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">http://obscenely.gay/</td>
+<td id="T_4343b_row8_col0" class="data row8 col0">333</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">https://www.obscenely.gay/</td>
-<td id="T_81703_row9_col0" class="data row9 col0">198</td>
+<td id="T_4343b_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">http://google.com/</td>
+<td id="T_4343b_row9_col0" class="data row9 col0">317</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">https://www.google.com/</td>
-<td id="T_81703_row10_col0" class="data row10 col0">165</td>
+<td id="T_4343b_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">https://OBSCENELY.GAY</td>
+<td id="T_4343b_row10_col0" class="data row10 col0">221</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">obscenely.gay</td>
-<td id="T_81703_row11_col0" class="data row11 col0">158</td>
+<td id="T_4343b_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blog</td>
+<td id="T_4343b_row11_col0" class="data row11 col0">220</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">https://OBSCENELY.GAY</td>
-<td id="T_81703_row12_col0" class="data row12 col0">149</td>
+<td id="T_4343b_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/assets/fonts/bely-regular.woff2</td>
+<td id="T_4343b_row12_col0" class="data row12 col0">219</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blog</td>
-<td id="T_81703_row13_col0" class="data row13 col0">148</td>
+<td id="T_4343b_level0_row13" class="row_heading level0 row13" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/static/RobotoMono-Regular.woff2</td>
+<td id="T_4343b_row13_col0" class="data row13 col0">219</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/static/RobotoMono-Regular.woff2</td>
-<td id="T_81703_row14_col0" class="data row14 col0">147</td>
+<td id="T_4343b_level0_row14" class="row_heading level0 row14" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/news</td>
+<td id="T_4343b_row14_col0" class="data row14 col0">218</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/assets/fonts/bely-regular.woff2</td>
-<td id="T_81703_row15_col0" class="data row15 col0">147</td>
+<td id="T_4343b_level0_row15" class="row_heading level0 row15" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/reviews/singles</td>
+<td id="T_4343b_row15_col0" class="data row15 col0">218</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/reviews/singles</td>
-<td id="T_81703_row16_col0" class="data row16 col0">146</td>
+<td id="T_4343b_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/reviews</td>
+<td id="T_4343b_row16_col0" class="data row16 col0">217</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/news</td>
-<td id="T_81703_row17_col0" class="data row17 col0">146</td>
+<td id="T_4343b_level0_row17" class="row_heading level0 row17" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/pro/event/create</td>
+<td id="T_4343b_row17_col0" class="data row17 col0">215</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/reviews</td>
-<td id="T_81703_row18_col0" class="data row18 col0">145</td>
+<td id="T_4343b_level0_row18" class="row_heading level0 row18" data-quarto-table-cell-role="th">https://www.google.com/</td>
+<td id="T_4343b_row18_col0" class="data row18 col0">175</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/pro/event/create</td>
-<td id="T_81703_row19_col0" class="data row19 col0">145</td>
+<td id="T_4343b_level0_row19" class="row_heading level0 row19" data-quarto-table-cell-role="th">obscenely.gay</td>
+<td id="T_4343b_row19_col0" class="data row19 col0">165</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">binance.com</td>
-<td id="T_81703_row20_col0" class="data row20 col0">131</td>
+<td id="T_4343b_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/directory/catalog/poz-bulk-subscriptions</td>
+<td id="T_4343b_row20_col0" class="data row20 col0">152</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row21" class="row_heading level0 row21" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/bloggers</td>
-<td id="T_81703_row21_col0" class="data row21 col0">119</td>
+<td id="T_4343b_level0_row21" class="row_heading level0 row21" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/bloggers</td>
+<td id="T_4343b_row21_col0" class="data row21 col0">152</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row22" class="row_heading level0 row22" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blogger/peter-staley</td>
-<td id="T_81703_row22_col0" class="data row22 col0">119</td>
+<td id="T_4343b_level0_row22" class="row_heading level0 row22" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blogger/peter-staley</td>
+<td id="T_4343b_row22_col0" class="data row22 col0">152</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row23" class="row_heading level0 row23" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/directory/catalog/poz-bulk-subscriptions</td>
-<td id="T_81703_row23_col0" class="data row23 col0">119</td>
+<td id="T_4343b_level0_row23" class="row_heading level0 row23" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blog/donna-summers-letter-to-act-up/comments</td>
+<td id="T_4343b_row23_col0" class="data row23 col0">151</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row24" class="row_heading level0 row24" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blogs</td>
-<td id="T_81703_row24_col0" class="data row24 col0">119</td>
+<td id="T_4343b_level0_row24" class="row_heading level0 row24" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/account</td>
+<td id="T_4343b_row24_col0" class="data row24 col0">151</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row25" class="row_heading level0 row25" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blog/donna-summers-letter-to-act-up/comments</td>
-<td id="T_81703_row25_col0" class="data row25 col0">118</td>
+<td id="T_4343b_level0_row25" class="row_heading level0 row25" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/blogs</td>
+<td id="T_4343b_row25_col0" class="data row25 col0">151</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row26" class="row_heading level0 row26" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/category/science-news</td>
-<td id="T_81703_row26_col0" class="data row26 col0">118</td>
+<td id="T_4343b_level0_row26" class="row_heading level0 row26" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/category/science-news</td>
+<td id="T_4343b_row26_col0" class="data row26 col0">151</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row27" class="row_heading level0 row27" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/account</td>
-<td id="T_81703_row27_col0" class="data row27 col0">118</td>
+<td id="T_4343b_level0_row27" class="row_heading level0 row27" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/iframe/contact-us</td>
+<td id="T_4343b_row27_col0" class="data row27 col0">151</td>
 </tr>
 <tr class="odd">
-<td id="T_81703_level0_row28" class="row_heading level0 row28" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/iframe/contact-us</td>
-<td id="T_81703_row28_col0" class="data row28 col0">118</td>
+<td id="T_4343b_level0_row28" class="row_heading level0 row28" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/category/ask-poz</td>
+<td id="T_4343b_row28_col0" class="data row28 col0">151</td>
 </tr>
 <tr class="even">
-<td id="T_81703_level0_row29" class="row_heading level0 row29" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/category/ask-poz</td>
-<td id="T_81703_row29_col0" class="data row29 col0">118</td>
+<td id="T_4343b_level0_row29" class="row_heading level0 row29" data-quarto-table-cell-role="th">https://OBSCENELY.GAY/tag/newly-diagnosed</td>
+<td id="T_4343b_row29_col0" class="data row29 col0">150</td>
 </tr>
 </tbody>
 </table>

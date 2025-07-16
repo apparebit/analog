@@ -35,11 +35,11 @@ dependencies = [
     # Analysis
     # --------
 
-    "pandas >= 2.2.3",  # Dataframes
+    "pandas >= 2.3.0",  # Dataframes
     "pandas-stubs",  # Typing
-    "numexpr >= 2.10.1",  # Pandas Performance
-    "bottleneck >= 1.4.2",  #_Pandas Performance
-    "pyarrow >= 19.0.0",  # Parquet
+    "numexpr >= 2.11.0",  # Pandas Performance
+    "bottleneck >= 1.5.0",  #_Pandas Performance
+    "pyarrow >= 20.0.0",  # Parquet
     "matplotlib >= 3.10.0",  # Graphs
     "tabulate",  # Tables
     "jinja2",  # Pandas table styles
@@ -48,6 +48,7 @@ dependencies = [
     # --------
 
     "ipykernel",
+    "jupyter",
 ]
 
 dynamic = ["version"]
