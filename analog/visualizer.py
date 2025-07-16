@@ -107,7 +107,7 @@ def plot_monthly_summary(summary: Summary) -> object:
         "Page Views"
     ]
     ax.legend(handles, labels)
-    ax.set_title("HTTPS Traffic for apparebit.com")
+    ax.set_title(f"https://apparebit.com: {summary.start} to {summary.stop}")
 
     return ax
 
@@ -154,7 +154,10 @@ def plot_monthly_percentage(summary: Summary) -> object:
         "Page Views"
     ]
     ax.legend(handles, labels)
-    ax.set_title("Useful Traffic as Fraction of Total (apparebit.com)")
+    ax.set_title(
+        "Useful Traffic as Fraction of Total — "
+        f"https://apparebit.com: {summary.start} to {summary.stop}"
+    )
 
     return ax
 
@@ -189,6 +192,6 @@ def plot_visitors(summary: Summary) -> object:
     # --------------------------------- Legend & Title ---------------------------------
     handles = [mlines.Line2D([], [], color=c) for c in line_colors]
     ax.legend(handles, labels)
-    ax.set_title("Unique Visitors (apparebit.com)")
+    ax.set_title(f"Unique Visitors — apparebit.com: {summary.start} to {summary.stop}")
 
     return ax
