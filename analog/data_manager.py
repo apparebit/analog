@@ -211,6 +211,14 @@ class DataManager:
         self._with_progress = with_progress
 
     @property
+    def hostname_db(self) -> Path:
+        return self._hostname_db_path
+
+    @property
+    def location_db(self) -> Path:
+        return self._location_db_path
+
+    @property
     def data(self) -> pd.DataFrame:
         assert self._log_data is not None
         return self._log_data
@@ -400,13 +408,13 @@ class DataManager:
             self._combine_and_write(self._coverage, target_path)
 
 
-def latest(
+def latest_manager(
     root: str | Path,
     clean: bool = False,
     incremental: bool = False,
     use_color: None | bool = None,
     **_: object,
-) -> pd.DataFrame:
+) -> DataManager:
     if use_color is None:
         use_color = sys.stdout.isatty()
     manager = DataManager(Path(root), with_progress=use_color)
@@ -414,4 +422,19 @@ def latest(
         manager.clean_monthly_logs()
     manager.ingest_monthly_logs()
     manager.combine_monthly_logs(incremental=incremental)
-    return manager.data
+    return manager
+
+
+def latest(
+    root: str | Path,
+    clean: bool = False,
+    incremental: bool = False,
+    use_color: None | bool = None,
+    **_: object,
+) -> pd.DataFrame:
+    return latest_manager(
+        root,
+        clean=clean,
+        incremental=incremental,
+        use_color=use_color
+    ).data

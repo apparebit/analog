@@ -4,6 +4,7 @@ __all__ = (
     'coerce',
     'fresh_counts',
     'latest',
+    'latest_manager',
     'merge',
     'MonthInYear',
     'monthly_period',
@@ -16,7 +17,7 @@ __all__ = (
 __version__ = "0.1.0"
 
 from .analyzer import analyze, fresh_counts, merge, select_page_views, summarize
-from .data_manager import latest
+from .data_manager import latest, latest_manager
 from .month_in_year import MonthInYear, monthly_period
 from .schema import coerce, validate
 from .visualizer import plot_monthly_summary, plot_monthly_percentage, plot_visitors

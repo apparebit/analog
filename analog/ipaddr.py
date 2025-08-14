@@ -1,5 +1,9 @@
 from collections.abc import Sequence
+from contextlib import AbstractContextManager
+import json
+import os
 from pathlib import Path
+from typing import Self
 
 from geoip2.database import Reader as LocationDatabaseReader
 from geoip2.errors import AddressNotFoundError
@@ -8,6 +12,42 @@ from geoip2.models import City as LocationData
 import pandas as pd
 
 from .error import StorageError
+
+
+class HostnameDb:
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        with open(path, mode='r', encoding='utf8') as file:
+            self._data = json.load(file)
+
+    def lookup(self, addr: str) -> None | str:
+        return self._data.get(addr)
+
+
+class LocationDb(AbstractContextManager):
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        self._reader = LocationDatabaseReader(os.fspath(path))
+        self._cache = dict()
+
+    def lookup(self, addr: str) -> None | str:
+        if addr not in self._cache:
+            try:
+                self._cache[addr] = self._reader.city(addr)
+            except AddressNotFoundError:
+                self._cache[addr] = None
+
+        return self._cache[addr]
+
+    def close(self) -> None:
+        self._reader.close()
+        self._reader = None
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, exc_type: None, exc_value: None, traceback: None) -> None:
+        self.close()
 
 
 def latest_location_db_path(path: None | Path = None) -> Path:
