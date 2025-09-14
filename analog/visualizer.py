@@ -52,7 +52,10 @@ def add_x_axis(ax: Any, summary: Summary) -> None:
     cursor = year_start
     while cursor <= year_stop:
         positions.append(cursor - summary.start + 6)
-        labels.append(f"└────\u200a{cursor.year}\u200a────┘")
+        label = "└" if cursor == year_start else ""
+        label += f"───╴{cursor.year}╶───"
+        label += "┘" if cursor == year_stop else "┴"
+        labels.append(label)
         cursor += 12
 
     sec = ax.secondary_xaxis(location=-0.1)
@@ -91,6 +94,11 @@ def plot_monthly_summary(summary: Summary) -> object:
     ax.get_yaxis().set_major_formatter(
         mp.ticker.FuncFormatter(lambda x, _: format(int(x), ","))
     )
+    ax.get_yaxis().set_major_locator(
+        mp.ticker.MultipleLocator(10_000)
+    )
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
 
     add_x_axis(ax, summary)
 
@@ -107,7 +115,9 @@ def plot_monthly_summary(summary: Summary) -> object:
         "Page Views"
     ]
     ax.legend(handles, labels)
-    ax.set_title(f"https://apparebit.com: {summary.start} to {summary.stop}")
+    ax.set_title(
+        f"apparebit.com: Monthly HTTP Requests ({summary.start} to {summary.stop})"
+    )
 
     return ax
 
@@ -141,8 +151,11 @@ def plot_monthly_percentage(summary: Summary) -> object:
     ax.get_yaxis().set_major_formatter(
         mp.ticker.FuncFormatter(lambda x, _: f"{int(x)}%")
     )
-    ax.axhline(50, color="#666", ls=(0, (10, 3)), lw=0.5, zorder=-665)
-    ax.text(22, 51, "50%", size="large", weight="medium", style="italic", color="#666")
+    ax.get_yaxis().set_major_locator(
+        mp.ticker.MultipleLocator(10)
+    )
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
 
     add_x_axis(ax, summary)
 
@@ -155,8 +168,8 @@ def plot_monthly_percentage(summary: Summary) -> object:
     ]
     ax.legend(handles, labels)
     ax.set_title(
-        "Useful Traffic as Fraction of Total — "
-        f"https://apparebit.com: {summary.start} to {summary.stop}"
+        "apparebit.com: Fraction of Useful HTTP Requests "
+        f"({summary.start} to {summary.stop})"
     )
 
     return ax
@@ -186,12 +199,24 @@ def plot_visitors(summary: Summary) -> object:
     ax.get_yaxis().set_major_formatter(
         mp.ticker.FuncFormatter(lambda x, _: format(int(x), ","))
     )
+    ax.get_yaxis().set_major_locator(
+        mp.ticker.MultipleLocator(1_000)
+    )
+    ax.get_yaxis().set_minor_formatter(
+        mp.ticker.FuncFormatter(lambda x, _: format(int(x), ","))
+    )
+    ax.get_yaxis().set_minor_locator(
+        mp.ticker.MultipleLocator(500)
+    )
+    ax.grid(axis="y", which="major")
+    ax.grid(axis="y", which="minor")
+    ax.set_axisbelow(True)
 
     add_x_axis(ax, summary)
 
     # --------------------------------- Legend & Title ---------------------------------
     handles = [mlines.Line2D([], [], color=c) for c in line_colors]
     ax.legend(handles, labels)
-    ax.set_title(f"Unique Visitors — apparebit.com: {summary.start} to {summary.stop}")
+    ax.set_title(f"apparebit.com: Unique Visitors ({summary.start} to {summary.stop})")
 
     return ax
